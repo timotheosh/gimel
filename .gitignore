@@ -1,0 +1,24 @@
+# Eamcs artifacts
+*~
+\#*
+.\#*
+
+# Vi(m) artifacts
+*.swp
+
+# Language server
+.lsp/
+
+# JetBrains
+.idea/
+
+/target
+/classes
+/checkouts
+profiles.clj
+pom.xml
+pom.xml.asc
+*.jar
+*.class
+/.lein-*
+/.nrepl-port

@@ -1,0 +1,6 @@
+{:configuration
+ {:public
+  {:document-dir "/srv/websites/localtest/sources/public"
+   :template {:resource "templates/layout212"}}
+  :admin
+  {:template {:resource "templates/html5-page-layout"}}}}

@@ -1,0 +1,6 @@
+{:body
+ {:header [:div#header]
+  :main [:div#main]
+  :left-side [:div#left-side]
+  :right-side [:div#right-side]
+  :footer [:div#footer]}}

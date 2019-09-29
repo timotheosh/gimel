@@ -1,0 +1,4 @@
+{:body
+ {:header [:header [:nav]]
+  :main [:section#pageContent [:main]]
+  :left-sidebar [:section#pageContent [:aside]]}}
