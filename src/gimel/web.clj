@@ -7,8 +7,10 @@
             [hiccup.page :refer [html5]]
             [optimus.link :as link]
             [ring.util.response :as res]
+            [watch.man :as watch]
             [gimel.config :as config]
-            [gimel.templates :as tmpl]))
+            [gimel.templates :as tmpl]
+            [gimel.static-pages :refer [source-dir export]]))
 
 (def admin-conf (:admin (:configuration @(config/read-config))))
 
@@ -51,5 +53,8 @@
               ["/" admin-handler]]]
     [true not-found]]])
 
-(def handler
+(defn handler []
+  (watch/watch!
+   source-dir
+   (fn [event] (export)))
   (make-handler routes))

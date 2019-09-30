@@ -8,6 +8,6 @@
 (def webroot (:webroot (:public (:configuration @(config/read-config)))))
 
 (def dev-app
-  (-> handler
+  (-> (handler)
       (wrap-defaults site-defaults)
       (wrap-file webroot)))

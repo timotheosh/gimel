@@ -3,61 +3,19 @@
   :CUSTOM_ID: gimel
   :END:
 
-Flat file CMS in Clojure
+Flat file CMS in Clojure. This watches a directory for markdown and html snippets, and then transforms those into web pages for a static site. You can then either copy the resulting files to your static website, or just run this as your webserver, as it serves your static pages by default. In the future, this will have an admin page you can log into to manage it.
 
 ** Installation
    :PROPERTIES:
    :CUSTOM_ID: installation
    :END:
 
-Download from http://example.com/FIXME.
-
-** Usage
-   :PROPERTIES:
-   :CUSTOM_ID: usage
-   :END:
-
-FIXME: explanation
-
-#+BEGIN_EXAMPLE
-    $ java -jar gimel-0.1.0-standalone.jar [args]
-#+END_EXAMPLE
-
-** Options
-   :PROPERTIES:
-   :CUSTOM_ID: options
-   :END:
-
-FIXME: listing of options this app accepts.
-
-** Examples
-   :PROPERTIES:
-   :CUSTOM_ID: examples
-   :END:
-
-...
-
-*** Bugs
-    :PROPERTIES:
-    :CUSTOM_ID: bugs
-    :END:
-
-...
-
-*** Any Other Sections
-    :PROPERTIES:
-    :CUSTOM_ID: any-other-sections
-    :END:
-
-*** That You Think
-    :PROPERTIES:
-    :CUSTOM_ID: that-you-think
-    :END:
-
-*** Might be Useful
-    :PROPERTIES:
-    :CUSTOM_ID: might-be-useful
-    :END:
+1. Clone this repo.
+   #+BEGIN_SRC shell
+   git clone https://github.com/timotheosh/gimel.git
+   #+END_SRC
+2. Change settings in ~gimel/resources/config/gimel.edn~ to fit your usage.
+3. Run ~lein run~ or ~lein ring server~
 
 ** License
    :PROPERTIES:
