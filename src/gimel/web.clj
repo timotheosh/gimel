@@ -1,20 +1,16 @@
 (ns gimel.web
   (:require [clojure.string :as str]
+            [clojure.java.io :as io]
             [bidi.bidi :refer [match-route]]
-            [bidi.ring :refer [files make-handler]]
+            [bidi.ring :refer [make-handler]]
             [hiccup.core :refer [html]]
             [hiccup.page :refer [html5]]
             [optimus.link :as link]
-            [stasis.core :as stasis]
-            [markdown.core :as md]
             [ring.util.response :as res]
             [gimel.config :as config]
-            [gimel.templates :as tmpl]
-            [gimel.highlight :as highlight]))
+            [gimel.templates :as tmpl]))
 
-(def public-conf (:public (:configuration @(config/read-config))))
 (def admin-conf (:admin (:configuration @(config/read-config))))
-(def public-dir (config/get-path (:document-dir public-conf)))
 
 (defn response
   "Return the page/data sent wrapped in a ring response."
@@ -24,53 +20,36 @@
    "text/html"))
 
 (defn page-layout
-  [request page]
+  [page]
   (clojure.string/join (tmpl/public-page
                         {:text page
                          :navbar (html [:h1 "HEADAE"])
                          :left-side (html [:h2 "SIDENOTES"])})))
 
 (defn admin-layout
-  [request page]
+  [page]
   (clojure.string/join (tmpl/admin-page
                         {:text page})))
 
-(defn index-handler
-  [request]
-  (response (page-layout request (html [:h1 "Main Page"]))))
-
 (defn admin-handler
   [request]
-  (response (admin-layout request (html [:h1 "Admin Page"]))))
+  (response (admin-layout (html [:h1 "Admin Page"]))))
 
-(defn partial-pages [pages]
-  (zipmap (keys pages)
-          (map #(fn [req] (response (page-layout req %)))
-               (vals pages))))
+(defn not-found
+  [request]
+  {:status 404
+   :headers {"Content-Type" "text/html"}
+   :body (page-layout
+          (html [:div
+                 [:h1 {:style "color: red; text-align: center"} "404"]
+                 [:h1 {:style "color: blue; text-align: center"} "Oopsie"]
+                 [:p "Sorry, the page you've requested is not found."]]))})
 
-(defn markdown-pages [pages]
-  (zipmap (map #(str/replace % #"\.md$" ".html") (keys pages))
-          (map #(fn [req] (response (page-layout req (md/md-to-html-string %)))) (vals pages))))
-
-(defn get-raw-pages []
-  (stasis/merge-page-sources
-   {:public (stasis/slurp-directory public-dir #".*\.(css|js)$")
-    :partials (partial-pages (stasis/slurp-directory public-dir #".*\.html$"))
-    :markdown (markdown-pages (stasis/slurp-directory public-dir #".*\.md$"))}))
-
-(defn prepare-page [page req]
-  (-> (if (string? page) page (page req))
-      highlight/highlight-code-blocks))
-
-(defn prepare-pages [pages]
-  (zipmap (keys pages)
-          (map #(partial prepare-page %) (vals pages))))
-
-(defn serve-pages [request]
-  (into [] (prepare-pages (get-raw-pages))))
-
-(def routes ["/" [["" serve-pages]
-                  ["admin" admin-handler]]])
+(def routes
+  ["/"
+   [["admin" [["" admin-handler]
+              ["/" admin-handler]]]
+    [true not-found]]])
 
 (def handler
   (make-handler routes))

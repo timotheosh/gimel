@@ -12,7 +12,8 @@
                  [markdown-clj "1.10.0"]
                  [enlive "1.1.6"]
                  [optimus "0.20.2"]
-                 [stasis "2.5.0"]]
+                 [stasis "2.5.0"]
+                 [spootnik/watchman "0.3.7"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:port 8880
          :handler gimel.handler/dev-app

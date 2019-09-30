@@ -17,7 +17,7 @@
 (defn get-assets []
   (concat
    (assets/load-assets (config/get-path (:template admin-conf)) [#".*\.(css|js)$"])
-   (assets/load-assets (config/get-path (:document-dir public-conf)) [#".*\.(css|js)$"])))
+   ))
 
 
 (def admin-navbar

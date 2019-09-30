@@ -1,20 +1,13 @@
 (ns gimel.handler
-  (:require [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+  (:require [ring.middleware.file :refer [wrap-file]]
+            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.middleware.session :refer [wrap-session]]
-            [optimus.prime :as optimus]
-            [optimus.optimizations :as optimizations]
-            [optimus.strategies :refer [serve-live-assets-autorefresh
-                                        serve-frozen-assets]]
             [gimel.config :as config]
-            [gimel.web :as web]
-            [gimel.templates :as tmpl]))
+            [gimel.web :refer [handler]]))
 
+(def webroot (:webroot (:public (:configuration @(config/read-config)))))
 
 (def dev-app
-  (-> web/handler
-      (optimus/wrap
-       tmpl/get-assets
-       optimizations/none
-       serve-live-assets-autorefresh)
-      (wrap-defaults
-       (assoc site-defaults :static false))))
+  (-> handler
+      (wrap-defaults site-defaults)
+      (wrap-file webroot)))

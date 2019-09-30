@@ -1,6 +1,8 @@
 {:configuration
  {:public
-  {:document-dir "/srv/websites/localtest/sources/public"
+  {:source-dir "/srv/websites/localtest/sources/public"
+   :webroot "/srv/websites/localtest/webroot"
+   :stage {:resource "public"}
    :template {:resource "templates/layout212"}}
   :admin
   {:template {:resource "templates/html5-page-layout"}}}}
