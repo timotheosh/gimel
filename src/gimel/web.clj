@@ -7,12 +7,13 @@
             [hiccup.page :refer [html5]]
             [optimus.link :as link]
             [ring.util.response :as res]
-            [watch.man :as watch]
+            [juxt.dirwatch :refer [watch-dir]]
             [gimel.config :as config]
             [gimel.templates :as tmpl]
             [gimel.static-pages :refer [source-dir export]]))
 
 (def admin-conf (:admin (:configuration @(config/read-config))))
+(def watcher (atom nil))
 
 (defn response
   "Return the page/data sent wrapped in a ring response."
@@ -53,8 +54,11 @@
               ["/" admin-handler]]]
     [true not-found]]])
 
+(defn start-watcher []
+  (reset! watcher
+          (watch-dir
+           (fn [event] (export))
+           (clojure.java.io/file source-dir))))
+
 (defn handler []
-  (watch/watch!
-   source-dir
-   (fn [event] (export)))
   (make-handler routes))

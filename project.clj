@@ -13,10 +13,11 @@
                  [enlive "1.1.6"]
                  [optimus "0.20.2"]
                  [stasis "2.5.0"]
-                 [spootnik/watchman "0.3.7"]]
+                 [juxt/dirwatch "0.2.5"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:port 8880
          :handler gimel.handler/dev-app
+         :init gimel.web/start-watcher
          :auto-refresh? true
          :auto-reload? true}
   :main ^:skip-aot gimel.core
