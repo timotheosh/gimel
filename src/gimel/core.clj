@@ -12,8 +12,7 @@
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]
-  (defn app
-    []
+  (def app
     (-> (handler)
         (wrap-defaults site-defaults)
         (wrap-file webroot)))
