@@ -1,6 +1,5 @@
 (ns gimel.templates
-  (:require [clojure.java.io :as io]
-            [net.cgrand.enlive-html :as html]
+  (:require [net.cgrand.enlive-html :as html]
             [hiccup.core :as hiccup]
             [optimus.assets :as assets]
             [gimel.config :as config]))
@@ -16,8 +15,9 @@
 
 (defn get-assets []
   (concat
-   (assets/load-assets (config/get-path (:template admin-conf)) [#".*\.(css|js)$"])
-   ))
+   (assets/load-assets (clojure.string/replace
+                        (:template public-conf)
+                        #"^resources/" "") [#".*\.(css|js)$"])))
 
 
 (def admin-navbar
@@ -31,7 +31,8 @@
   (:main (:body public-template-config)) (html/html-content (:text ctxt))
   (:left-side (:body public-template-config)) (html/html-content (:left-side ctxt))
   (:right-side (:body public-template-config)) (html/html-content (:right-side ctxt))
-  (:footer (:body public-template-config)) (html/html-content (:footer ctxt)))
+  (:footer (:body public-template-config)) (html/html-content (:footer ctxt))
+  )
 
 (html/deftemplate admin-page admin-template
   [ctxt]

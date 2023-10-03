@@ -4,20 +4,10 @@
 
 (def config-file (str (System/getenv "HOME") "/.config/gimel/gimel.edn"))
 
-(defn get-path
-  "Returns either a relative path for resources or a full path."
-  [data]
-  (if (:resource data)
-    (:resource data)
-    data))
-
 (defn get-file
-  "Returns file contents based on whether it is a resource or a file on
-  the filesystem."
-  [file-data file]
-  (if (:resource file-data)
-    (io/resource (str (:resource file-data) "/" file))
-    (io/file (str file-data "/" file))))
+  "Returns file io object."
+  [file-path file]
+  (io/file (str file-path "/" file)))
 
 (defn read-edn
   "Reads edn file from io/file"

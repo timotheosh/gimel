@@ -1,7 +1,6 @@
 (ns gimel.core
   (:require [ring.middleware.file :refer [wrap-file]]
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
-            [ring.middleware.session :refer [wrap-session]]
             [ring.adapter.jetty :as jetty]
             [gimel.config :as config]
             [gimel.web :refer [start-watcher handler]])

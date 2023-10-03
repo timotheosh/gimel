@@ -1,11 +1,8 @@
 (ns gimel.web
   (:require [clojure.string :as str]
             [clojure.java.io :as io]
-            [bidi.bidi :refer [match-route]]
             [bidi.ring :refer [make-handler]]
             [hiccup.core :refer [html]]
-            [hiccup.page :refer [html5]]
-            [optimus.link :as link]
             [ring.util.response :as res]
             [juxt.dirwatch :refer [watch-dir]]
             [gimel.config :as config]
@@ -26,7 +23,7 @@
   [page]
   (clojure.string/join (tmpl/public-page
                         {:text page
-                         :navbar (html [:h1 "HEADAE"])
+                         :navbar (html [:h1 "HEAD"])
                          :left-side (html [:h2 "SIDENOTES"])})))
 
 (defn admin-layout

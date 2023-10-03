@@ -11,15 +11,14 @@
             [gimel.highlight :as highlight]))
 
 (def public-conf (:public (:configuration @(config/read-config))))
-(def source-dir (config/get-path (:source-dir public-conf)))
-(def webroot (config/get-path (:webroot (:public (:configuration @(config/read-config))))))
-(def staging (config/get-path (:stage (:public (:configuration @(config/read-config))))))
+(def source-dir (:source-dir public-conf))
+(def webroot (:webroot public-conf))
 
 (defn page-layout
   [request page]
   (clojure.string/join (tmpl/public-page
                         {:text page
-                         :navbar (html [:h1 "HEADAE"])
+                         :navbar (html [:h1 "HEAD"])
                          :left-side (html [:h2 "SIDENOTES"])})))
 
 (defn partial-pages [pages]
