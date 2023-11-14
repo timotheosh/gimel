@@ -6,6 +6,7 @@
             [hiccup.core :refer [html]]
             [stasis.core :as stasis]
             [markdown.core :as md]
+            [markdown.transformers :refer [transformer-vector]]
             [gimel.config :as config]
             [gimel.templates :as tmpl]
             [gimel.highlight :as highlight]))
@@ -13,6 +14,29 @@
 (def public-conf (:public (:configuration @(config/read-config))))
 (def source-dir (:source-dir public-conf))
 (def webroot (:webroot public-conf))
+
+(defn escape-images [text state]
+  [(clojure.string/replace text #"(!\[.*?\]\()(.+?)(\))" "") state])
+
+(defn escape-html
+  "Change special characters into HTML character entities."
+  [text state]
+  [(if-not (or (:code state) (:codeblock state))
+     (clojure.string/escape
+      text
+      {\& "&amp;"
+       \< "&lt;"
+       \> "&gt;"
+       \" "&quot;"
+       \' "&#39;"})
+     text) state])
+
+(defn convert-md-links [text state]
+  (let [protocol-regex #".*\([^\)]*://.*\).*"
+        md-link-regex  #"\(([^)]+?)\.md\)"]
+    (if (re-find protocol-regex text)
+      [text state] ; Skip alteration if it's an external URL
+      [(clojure.string/replace text md-link-regex "($1.html)") state]))) ; Replace .md with .html for internal links
 
 (defn page-layout
   [request page]
@@ -27,7 +51,9 @@
 
 (defn markdown-pages [pages]
   (zipmap (map #(str/replace % #"\.md$" ".html") (keys pages))
-          (map #(fn [req] (page-layout req (md/md-to-html-string %))) (vals pages))))
+          (map #(fn [req] (page-layout
+                           req (md/md-to-html-string % :replacement-transformers
+                                                     (into [escape-images escape-html convert-md-links] transformer-vector)))) (vals pages))))
 
 (defn get-raw-pages []
   (stasis/merge-page-sources
