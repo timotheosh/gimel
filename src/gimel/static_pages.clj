@@ -1,5 +1,5 @@
 (ns gimel.static-pages
-  (:require [clojure.string :as str]
+  (:require [clojure.string :as string]
             [optimus.export]
             [optimus.link :as link]
             [optimus.optimizations :as optimizations]
@@ -16,13 +16,13 @@
 (def webroot (:webroot public-conf))
 
 (defn escape-images [text state]
-  [(clojure.string/replace text #"(!\[.*?\]\()(.+?)(\))" "") state])
+  [(string/replace text #"(!\[.*?\]\()(.+?)(\))" "") state])
 
 (defn escape-html
   "Change special characters into HTML character entities."
   [text state]
   [(if-not (or (:code state) (:codeblock state))
-     (clojure.string/escape
+     (string/escape
       text
       {\& "&amp;"
        \< "&lt;"
@@ -36,21 +36,21 @@
         md-link-regex  #"\(([^)]+?)\.md\)"]
     (if (re-find protocol-regex text)
       [text state] ; Skip alteration if it's an external URL
-      [(clojure.string/replace text md-link-regex "($1.html)") state]))) ; Replace .md with .html for internal links
+      [(string/replace text md-link-regex "($1.html)") state]))) ; Replace .md with .html for internal links
 
 (defn page-layout
   [request page]
-  (clojure.string/join (tmpl/public-page
-                        {:text page
-                         :navbar (html [:h1 "HEAD"])
-                         :left-side (html [:h2 "SIDENOTES"])})))
+  (string/join (tmpl/public-page
+                {:text page
+                 :navbar (html [:h1 "HEAD"])
+                 :left-side (html [:h2 "SIDENOTES"])})))
 
 (defn partial-pages [pages]
   (zipmap (keys pages)
           (map #(fn [req] (page-layout req %)) (vals pages))))
 
 (defn markdown-pages [pages]
-  (zipmap (map #(str/replace % #"\.md$" ".html") (keys pages))
+  (zipmap (map #(string/replace % #"\.md$" ".html") (keys pages))
           (map #(fn [req] (page-layout
                            req (md/md-to-html-string % :replacement-transformers
                                                      (into [escape-images escape-html convert-md-links] transformer-vector)))) (vals pages))))
