@@ -10,7 +10,6 @@
                  [bidi "2.1.6"]
                  [hiccup "1.0.5"]
                  [markdown-clj "1.11.7"]
-                 [org-parser "0.1.27"]
                  [enlive "1.1.6"]
                  [optimus "2023-10-03"]
                  [stasis "2023.06.03"]

@@ -9,7 +9,6 @@
             [gimel.templates :as tmpl]
             [gimel.static-pages :refer [source-dir export]]))
 
-(def admin-conf (:admin (:configuration @(config/read-config))))
 (def watcher (atom nil))
 
 (defn response
@@ -52,6 +51,7 @@
     [true not-found]]])
 
 (defn start-watcher []
+  (export)
   (reset! watcher
           (watch-dir
            (fn [event] (export))
