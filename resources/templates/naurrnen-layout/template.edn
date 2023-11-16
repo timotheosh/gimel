@@ -1,0 +1,4 @@
+{:body
+ {:header [:header :nav]
+  :main [:section#pageContent :main :article]
+  :footer [:footer :p]}}

@@ -15,6 +15,8 @@
 (def public-conf (:public (:configuration @(config/read-config))))
 (def source-dir (:source-dir public-conf))
 (def webroot (:webroot public-conf))
+(def footer (:footer public-conf))
+
 
 (defn convert-md-links [text state]
   (let [protocol-regex #".*\([^\)]*://.*\).*"
@@ -27,12 +29,20 @@
   (let [space-regex #"\(([^)]+?)\s+([^)]+?)\)"]
     [string/replace text space-regex "($1%20$2)" state]))
 
+(defn md-page-layout
+  [request page]
+  (string/join (tmpl/public-page
+                {:title (first (:title (:metadata page)))
+                 :text (:html page)
+                 :navbar (html [:h1 "HEAD"])
+                 :footer footer})))
+
 (defn page-layout
   [request page]
   (string/join (tmpl/public-page
-                {:text page
+                {:text (:html page)
                  :navbar (html [:h1 "HEAD"])
-                 :left-side (html [:h2 "SIDENOTES"])})))
+                 :footer footer})))
 
 (defn partial-pages [pages]
   (zipmap (keys pages)
@@ -40,9 +50,15 @@
 
 (defn markdown-pages [pages]
   (zipmap (map #(string/replace % #"\.md$" ".html") (keys pages))
-          (map #(fn [req] (page-layout
-                           req (md/md-to-html-string % :replacement-transformers
-                                                     (into [convert-md-links] transformer-vector)))) (vals pages))))
+          (map #(fn [req]
+                  (md-page-layout
+                   req (md/md-to-html-string-with-meta
+                        % :replacement-transformers
+                        (into [convert-md-links] transformer-vector)))) (vals pages))))
+
+(defn markdown-meta [pages]
+  (zipmap (map #(string/replace % #"\.md$" ".html") (keys pages))
+          (map (fn [page] (:metadata (md/md-to-html-string-with-meta page))) (vals pages))))
 
 (defn get-raw-pages []
   (stasis/merge-page-sources
