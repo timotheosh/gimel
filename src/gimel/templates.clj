@@ -22,6 +22,6 @@
 (html/deftemplate public-page public-template
   [ctxt]
   [:title] (html/html-content (:title ctxt))
-  (:header (:body public-template-config)) (html/html-content (:navbar ctxt))
+  (:navbar (:body public-template-config)) (html/html-content (:navbar ctxt))
   (:main (:body public-template-config)) (html/html-content (:text ctxt))
   (:footer (:body public-template-config)) (html/html-content (:footer ctxt)))
