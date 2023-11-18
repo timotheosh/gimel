@@ -28,8 +28,8 @@
       (slurp file))))
 
 (defn convert-md-links [text state]
-  (let [combined-regex #"\((?![^)]*:\/\/)([^)]+?)\.md\)"]
-    [(clojure.string/replace text combined-regex "($1.html)") state]))
+  (let [combined-regex #"\((?![^)]*:\/\/)([^)]+?)\.md([)#])"]
+    [(clojure.string/replace text combined-regex "($1.html$2") state]))
 
 (defn preserve-spaces-in-links [text state]
   (let [space-regex #"\(([^)]+?)\s+([^)]+?)\)"]
