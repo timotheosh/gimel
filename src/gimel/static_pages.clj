@@ -37,7 +37,7 @@
     element))
 
 (defn flexmark-filter [element]
-  (cond (and (map? element) (:href element)) (let [combined-regex #"(?<!\S:\/\/)([^ ]+?)\.md(?=$|\s)"]
+  (cond (and (map? element) (:href element)) (let [combined-regex #"(?<!\S:\/\/)([^ ]+?)\.md(?=$|\s|#)"]
                                                (update element :href #(clojure.string/replace % combined-regex "$1.html")))
         (and (string? element) (re-find #"\!\[[^\]]+\]\([^\)]+\)" element)) (extract-img (ir/md-to-ir element))
         :else element))
