@@ -1,6 +1,7 @@
 (ns gimel.static-pages
   (:require [clojure.string :as string]
             [clojure.java.io :as io]
+            [clojure.walk :refer [postwalk prewalk]]
             [optimus.export]
             [optimus.link :as link]
             [optimus.optimizations :as optimizations]
@@ -8,6 +9,8 @@
             [stasis.core :as stasis]
             [markdown.core :as md]
             [markdown.transformers :refer [transformer-vector]]
+            [cybermonday.ir :as ir]
+            [cybermonday.core :as cm]
             [gimel.config :as config]
             [gimel.os :as os]
             [gimel.templates :as tmpl]
@@ -27,11 +30,23 @@
     (if (.exists file)
       (slurp file))))
 
-(defn convert-md-links [text state]
+(defn extract-img [element]
+  (if (and (vector? element) (= (first element) :div))
+    (let [[_ _ [_ _ img]] element]
+      img)
+    element))
+
+(defn flexmark-filter [element]
+  (cond (and (map? element) (:href element)) (let [combined-regex #"(?<!\S:\/\/)([^ ]+?)\.md(?=$|\s)"]
+                                               (update element :href #(clojure.string/replace % combined-regex "$1.html")))
+        (and (string? element) (re-find #"\!\[[^\]]+\]\([^\)]+\)" element)) (extract-img (ir/md-to-ir element))
+        :else element))
+
+(defn mdclj-convert-md-links [text state]
   (let [combined-regex #"\((?![^)]*:\/\/)([^)]+?)\.md([)#])"]
     [(clojure.string/replace text combined-regex "($1.html$2") state]))
 
-(defn preserve-spaces-in-links [text state]
+(defn mdclj-preserve-spaces-in-links [text state]
   (let [space-regex #"\(([^)]+?)\s+([^)]+?)\)"]
     [string/replace text space-regex "($1%20$2)" state]))
 
@@ -54,20 +69,29 @@
   (zipmap (keys pages)
           (map #(fn [req] (page-layout req %)) (vals pages))))
 
+(defn process-markdown
+  "Preprocesses the markdown file for cybermonday."
+  [markdown-string]
+  (let [strings (remove empty? (string/split markdown-string #"---" 3))
+        frontmatter (cm/parse-yaml (first strings))]
+    (if (= (:Processor frontmatter) "markdown-clj")
+      {:frontmatter frontmatter :body (md/md-to-html-string
+                                       (second strings) :replacement-transformers
+                                       (into [mdclj-convert-md-links] transformer-vector))}
+      {:frontmatter frontmatter :body (html (postwalk flexmark-filter (cm/parse-body (second strings))))})))
+
 (defn markdown-pages
   ([pages] (markdown-pages pages {}))
   ([pages navbar]
-   (zipmap (map #(string/replace % #"\.md$" ".html") (keys pages))
-           (map #(fn [req]
-                   (md-page-layout
-                    req (assoc (md/md-to-html-string-with-meta
-                                % :replacement-transformers
-                                (into [convert-md-links] transformer-vector))
-                               :navbar navbar))) (vals pages)))))
-
-(defn markdown-meta [pages]
-  (zipmap (map #(string/replace % #"\.md$" ".html") (keys pages))
-          (map (fn [page] (:metadata (md/md-to-html-string-with-meta page))) (vals pages))))
+   (into {}
+         (for [[key value] pages]
+           (let [processed-page (process-markdown value)
+                 page-name (string/replace key #"\.md$" ".html")]
+             {page-name #(md-page-layout nil {:page page-name
+                                              :metadata (:frontmatter processed-page)
+                                              :title (:title (:frontmatter processed-page))
+                                              :text (:body processed-page)
+                                              :navbar navbar})})))))
 
 (defn get-raw-pages []
   (stasis/merge-page-sources
