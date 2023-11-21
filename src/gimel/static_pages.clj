@@ -51,7 +51,7 @@
     [string/replace text space-regex "($1%20$2)" state]))
 
 (defn md-page-layout
-  [request page]
+  [page]
   (string/join (tmpl/public-page
                 {:title (first (:title (:metadata page)))
                  :text (:html page)
@@ -59,7 +59,7 @@
                  :footer footer})))
 
 (defn page-layout
-  [request page]
+  [page]
   (string/join (tmpl/public-page
                 {:text (:html page)
                  :navbar (html [:h1 "HEAD"])
@@ -67,7 +67,7 @@
 
 (defn partial-pages [pages]
   (zipmap (keys pages)
-          (map #(fn [req] (page-layout req %)) (vals pages))))
+          (map #(page-layout %) (vals pages))))
 
 (defn process-markdown
   "Preprocesses the markdown file for cybermonday."
@@ -87,11 +87,11 @@
          (for [[key value] pages]
            (let [processed-page (process-markdown value)
                  page-name (string/replace key #"\.md$" ".html")]
-             {page-name #(md-page-layout nil {:page page-name
-                                              :metadata (:frontmatter processed-page)
-                                              :title (:title (:frontmatter processed-page))
-                                              :text (:body processed-page)
-                                              :navbar navbar})})))))
+             {page-name #(md-page-layout {:page page-name
+                                          :metadata (:frontmatter processed-page)
+                                          :title (:title (:frontmatter processed-page))
+                                          :html (:body processed-page)
+                                          :navbar navbar})})))))
 
 (defn get-raw-pages []
   (stasis/merge-page-sources
@@ -99,13 +99,13 @@
     :partials (partial-pages (stasis/slurp-directory source-dir #".*\.html$"))
     :markdown (markdown-pages (stasis/slurp-directory source-dir #".*\.md$") (get-navbar-html))}))
 
-(defn prepare-page [page req]
-  (-> (if (string? page) page (page req))
+(defn prepare-page [page]
+  (-> (if (string? page) page (page))
       highlight/highlight-code-blocks))
 
 (defn prepare-pages [pages]
   (zipmap (keys pages)
-          (map #(partial prepare-page %) (vals pages))))
+          (map #(prepare-page %) (vals pages))))
 
 (defn get-pages []
   (prepare-pages (get-raw-pages)))
