@@ -11,6 +11,7 @@
             [markdown.transformers :refer [transformer-vector]]
             [cybermonday.ir :as ir]
             [cybermonday.core :as cm]
+            [cybermonday.utils :refer [gen-id make-hiccup-node]]
             [gimel.config :as config]
             [gimel.os :as os]
             [gimel.templates :as tmpl]
@@ -36,10 +37,35 @@
       img)
     element))
 
+(defn flexmark-headers
+  "Autocreates anchor links for all headers."
+  [[_ attrs & body :as node]]
+  (make-hiccup-node
+   :div
+   (dissoc
+    (let [id (if (nil? (:id attrs))
+               (gen-id node)
+               (:id attrs))]
+      (assoc attrs
+             :id id
+             :class "anchor"
+             :href (str "#" id)))
+    :level)
+   [(make-hiccup-node
+     (keyword (str "h" (:level attrs)))
+     (dissoc
+      (let [id (if (nil? (:id attrs))
+                 (gen-id node)
+                 (:id attrs))]
+        (assoc attrs
+               :id id))
+      :level)
+     body)]))
+
 (defn flexmark-filter [element]
   (cond (and (map? element) (:href element)) (let [combined-regex #"(?<!\S:\/\/)([^ ]+?)\.md(?=$|\s|#)"]
                                                (update element :href #(clojure.string/replace % combined-regex "$1.html")))
-        (and (string? element) (re-find #"\!\[[^\]]+\]\([^\)]+\)" element)) (extract-img (ir/md-to-ir element))
+        (and (string? element) (or (re-find #"\!\[[^\]]+\]\([^\)]+\)" element))) (extract-img (ir/md-to-ir element))
         :else element))
 
 (defn mdclj-convert-md-links [text state]
@@ -53,7 +79,7 @@
 (defn md-page-layout
   [page]
   (string/join (tmpl/public-page
-                {:title (first (:title (:metadata page)))
+                {:title (:title page)
                  :text (:html page)
                  :navbar (:navbar page)
                  :footer footer})))
@@ -78,7 +104,9 @@
       {:frontmatter frontmatter :body (md/md-to-html-string
                                        (second strings) :replacement-transformers
                                        (into [mdclj-convert-md-links] transformer-vector))}
-      {:frontmatter frontmatter :body (html (postwalk flexmark-filter (cm/parse-body (second strings))))})))
+      {:frontmatter frontmatter :body
+       (html (postwalk flexmark-filter (cm/parse-body (second strings)
+                                                      {:lower-fns {:markdown/heading flexmark-headers}})))})))
 
 (defn markdown-pages
   ([pages] (markdown-pages pages {}))
@@ -89,7 +117,7 @@
                  page-name (string/replace key #"\.md$" ".html")]
              {page-name #(md-page-layout {:page page-name
                                           :metadata (:frontmatter processed-page)
-                                          :title (:title (:frontmatter processed-page))
+                                          :title (:Title (:frontmatter processed-page))
                                           :html (:body processed-page)
                                           :navbar navbar})})))))
 
