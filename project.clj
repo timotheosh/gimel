@@ -21,4 +21,8 @@
          :auto-reload? true}
   :main ^:skip-aot gimel.core
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}
+             :dev {:plugins [[com.jakemccrary/lein-test-refresh "0.12.0"]
+                             [lein-cloverage "1.2.2"]]}}
+  :test-refresh {:watch-dirs ["src" "test"]
+                 :refresh-dirs ["src" "test"]})

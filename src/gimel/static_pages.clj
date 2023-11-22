@@ -31,14 +31,8 @@
     (if (.exists file)
       (slurp file))))
 
-(defn extract-img [element]
-  (if (and (vector? element) (= (first element) :div))
-    (let [[_ _ [_ _ img]] element]
-      img)
-    element))
-
 (defn flexmark-headers
-  "Autocreates anchor links for all headers."
+  "Cybermonkey lowering function that autocreates anchor links for all headers."
   [[_ attrs & body :as node]]
   (make-hiccup-node
    :div
@@ -62,13 +56,20 @@
       :level)
      body)]))
 
-(defn flexmark-filter [element]
-  (cond (and (map? element) (:href element)) (let [combined-regex #"(?<!\S:\/\/)([^ ]+?)\.md(?=$|\s|#)"]
-                                               (update element :href #(clojure.string/replace % combined-regex "$1.html")))
-        (and (string? element) (or (re-find #"\!\[[^\]]+\]\([^\)]+\)" element))) (extract-img (ir/md-to-ir element))
+(defn flexmark-filter
+  "Postwalk hiccup filters for changing link references to html, and
+  handling markdown images that are encased between html tags."
+  [element]
+  (cond (and (map? element) (:href element) (not (re-find #"[\w]+:\/\/" (:href element))))
+        (let [combined-regex #"([^ ]+?)\.md(?=$|\s|#)"]
+          (update element :href #(clojure.string/replace % combined-regex "$1.html")))
+        (and (string? element) (re-find #"\!\[[^\]]+\]\([^\)]+\)" element))
+        (let [[_ _ [_ _ image]] (ir/md-to-ir element)] image)
         :else element))
 
-(defn mdclj-convert-md-links [text state]
+(defn mdclj-convert-md-links
+  "Convert internet md links to html links for markdown-clj parser."
+  [text state]
   (let [combined-regex #"\((?![^)]*:\/\/)([^)]+?)\.md([)#])"]
     [(clojure.string/replace text combined-regex "($1.html$2") state]))
 
