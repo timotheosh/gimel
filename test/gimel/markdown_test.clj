@@ -1,7 +1,7 @@
-(ns gimel.static-pages-test
+(ns gimel.markdown-test
   (:require [clojure.test :refer :all]
             [cybermonday.ir :as ir]
-            [gimel.static-pages :refer :all]))
+            [gimel.markdown :refer :all]))
 
 (deftest test-flexmark-headers
   (testing "Testing flexmark-headers"
@@ -33,3 +33,10 @@
            ["[A Lnk](./Places/a-file.html#section-1)" :state]))
     (is (= (mdclj-convert-md-links "[A Lnk](https://example.com/some-file.md)" :state)
            ["[A Lnk](https://example.com/some-file.md)" :state]))))
+
+(deftest test-process-markdown
+  (testing "Testing process-markdow"
+    (is (= (process-markdown "---\nTitle: Lorem\nCategory: Latin\n---\n\n# Section 1\nVivamus id enim. Phasellus [lacus](./Latin/lacus.md#section-1). **Nullam** *eu* ante vel est convallis dignissim.")
+           {:frontmatter {:Title "Lorem", :Category "Latin"},
+            :body
+            "<div><div class=\"anchor\" href=\"#section-1\" id=\"section-1\"><h1 id=\"section-1\">Section 1</h1></div><p>Vivamus id enim. Phasellus <a href=\"./Latin/lacus.html#section-1\">lacus</a>. <strong>Nullam</strong> <em>eu</em> ante vel est convallis dignissim.</p></div>"}))))
