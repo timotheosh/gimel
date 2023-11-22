@@ -8,6 +8,7 @@
                  [ring/ring-defaults "0.4.0"]
                  [hiccup "1.0.5"]
                  [markdown-clj "1.11.7"]
+                 [com.kiranshila/cybermonday "0.6.213"]
                  [enlive "1.1.6"]
                  [optimus "2023.10.19"]
                  [stasis "2023.06.03"]
