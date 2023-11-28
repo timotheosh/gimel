@@ -8,7 +8,8 @@
             [cybermonday.core :as cm]
             [cybermonday.utils :refer [gen-id make-hiccup-node]]
             [gimel.config :as config]
-            [gimel.templates :as tmpl]))
+            [gimel.templates :as tmpl]
+            [gimel.database :as db]))
 
 (def public-conf (:public (:configuration @(config/read-config))))
 (def footer (:footer public-conf))
@@ -25,18 +26,13 @@
                (:id attrs))]
       (assoc attrs
              :id id
-             :class "anchor"
-             :href (str "#" id)))
+             :class "anchor"))
     :level)
    [(make-hiccup-node
      (keyword (str "h" (:level attrs)))
-     (dissoc
-      (let [id (if (nil? (:id attrs))
-                 (gen-id node)
-                 (:id attrs))]
-        (assoc attrs
-               :id id))
-      :level)
+     (if (:class attrs)
+       {:class (:class attrs)}
+       {})
      body)]))
 
 (defn flexmark-filter
@@ -84,6 +80,7 @@
          (for [[key value] pages]
            (let [processed-page (process-markdown value)
                  page-name (string/replace key #"\.md$" ".html")]
+             (db/insert-data page-name (:frontmatter processed-page) (:body processed-page))
              {page-name #(md-page-layout {:page page-name
                                           :metadata (:frontmatter processed-page)
                                           :title (:Title (:frontmatter processed-page))

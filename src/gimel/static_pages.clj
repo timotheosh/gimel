@@ -10,7 +10,9 @@
             [gimel.templates :as tmpl]
             [gimel.highlight :as highlight]
             [gimel.markdown :refer [markdown-pages]]
-            [gimel.static-files :refer [copy-files]]))
+            [gimel.static-files :refer [copy-files]]
+            [gimel.database :refer [create-database]]
+            [gimel.sitemap :refer [gen-sitemap]]))
 
 (def public-conf (:public (:configuration @(config/read-config))))
 (def source-dir (:source-dir public-conf))
@@ -54,15 +56,18 @@
   (prepare-pages (get-raw-pages)))
 
 (defn export []
+  (create-database)
   (let [assets (optimizations/all (tmpl/get-assets) {})]
     (stasis/empty-directory! webroot)
     (optimus.export/save-assets assets webroot)
     (stasis/export-pages (get-pages) webroot {:optimus-assets assets})
-    (copy-files source-dir webroot [".jpg" ".png" ".gif" ".webp" ".js" ".css"])))
+    (copy-files source-dir webroot [".jpg" ".png" ".gif" ".webp" ".js" ".css"])
+    (gen-sitemap)))
 
 (defn old-export []
   (let [assets (optimizations/all (tmpl/get-assets) {})]
     (stasis/empty-directory! webroot)
     (optimus.export/save-assets assets webroot)
     (stasis/export-pages (get-pages) webroot {:optimus-assets assets})
-    (copy-files source-dir webroot [".jpg" ".png" ".gif" ".webp"])))
+    (copy-files source-dir webroot [".jpg" ".png" ".gif" ".webp"])
+    (gen-sitemap)))

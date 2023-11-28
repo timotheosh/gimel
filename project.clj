@@ -12,7 +12,11 @@
                  [enlive "1.1.6"]
                  [optimus "2023.10.19"]
                  [stasis "2023.06.03"]
-                 [juxt/dirwatch "0.2.5"]]
+                 [juxt/dirwatch "0.2.5"]
+                 [tick "0.7.5"]
+                 [sitemap "0.4.0"]
+                 [com.github.seancorfield/next.jdbc "1.3.894"]
+                 [org.xerial/sqlite-jdbc "3.39.2.1"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:port 8880
          :handler gimel.handler/dev-app

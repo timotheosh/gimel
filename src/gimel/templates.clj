@@ -5,11 +5,7 @@
             [gimel.config :as config]))
 
 (def public-conf (:public (:configuration @(config/read-config))))
-
-
 (def public-template (config/get-file (:template public-conf) "index.html"))
-
-
 (def public-template-config (config/read-edn (config/get-file (:template public-conf) "template.edn")))
 
 

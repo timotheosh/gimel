@@ -6,13 +6,9 @@
 (deftest test-flexmark-headers
   (testing "Testing flexmark-headers"
     (is (= (flexmark-headers (nth (ir/md-to-ir "# Section 1") 2))
-           [:div
-            {:id "section-1", :class "anchor", :href "#section-1"}
-            [:h1 {:id "section-1"} "Section 1"]]))
+           [:div {:id "section-1", :class "anchor"} [:h1 {} "Section 1"]]))
     (is (= (flexmark-headers (nth (ir/md-to-ir "### Subsection 3") 2))
-           [:div
-            {:id "subsection-3", :class "anchor", :href "#subsection-3"}
-            [:h3 {:id "subsection-3"} "Subsection 3"]]))))
+           [:div {:id "subsection-3", :class "anchor"} [:h3 {} "Subsection 3"]]))))
 
 (deftest test-flexmark-filter
   (testing "Testing flexmark-filter markdown links"
@@ -39,4 +35,4 @@
     (is (= (process-markdown "---\nTitle: Lorem\nCategory: Latin\n---\n\n# Section 1\nVivamus id enim. Phasellus [lacus](./Latin/lacus.md#section-1). **Nullam** *eu* ante vel est convallis dignissim.")
            {:frontmatter {:Title "Lorem", :Category "Latin"},
             :body
-            "<div><div class=\"anchor\" href=\"#section-1\" id=\"section-1\"><h1 id=\"section-1\">Section 1</h1></div><p>Vivamus id enim. Phasellus <a href=\"./Latin/lacus.html#section-1\">lacus</a>. <strong>Nullam</strong> <em>eu</em> ante vel est convallis dignissim.</p></div>"}))))
+            "<div><div class=\"anchor\" id=\"section-1\"><h1>Section 1</h1></div><p>Vivamus id enim. Phasellus <a href=\"./Latin/lacus.html#section-1\">lacus</a>. <strong>Nullam</strong> <em>eu</em> ante vel est convallis dignissim.</p></div>"}))))
