@@ -44,18 +44,24 @@
           (list first-part second-part))
       (error "No headers found"))))
 
+
 (defun gimel-org-metadata-to-yaml (org-content)
   "Converts the org-mode file-level metadata in a string into yaml format."
   (let ((lines (split-string org-content "\n"))
-        (yaml-content '()))
-    (push "---" yaml-content)
+        (yaml-content '())
+        (found-metadata nil))
     (dolist (line lines)
       (when (string-match "^#\\+\\(.*?\\): \\(.*\\)$" line)
+        (unless found-metadata
+          (push "---" yaml-content)
+          (setq found-metadata t))
         (let ((key (match-string 1 line))
               (value (match-string 2 line)))
           (push (format "%s: \"%s\"" (downcase key) value) yaml-content))))
-    (push "---" yaml-content)
-    (mapconcat 'identity (reverse yaml-content) "\n")))
+    (if found-metadata
+        (progn  (push "---" yaml-content)
+                (mapconcat 'identity (reverse yaml-content) "\n"))
+      "")))
 
 (defun gimel-get-source-path ()
   "Returns the source path."
@@ -75,6 +81,7 @@
 
 (defun gimel-copy-asset-files ()
   "Copy all asset files from the source directory to the target directory."
+  (interactive)
   (let ((source-dir (gimel-get-source-path))
         (target-dir (gimel-get-target-path))
         (asset-extensions '("\\.jpg$" "\\.png$" "\\.gif$"
@@ -132,7 +139,7 @@
       (insert org-content)
       (org-mode)
       (gimel-preprocessors)
-      (setq html-content (org-export-as 'html nil nil t '(:with-toc nil))))
+      (setq html-content (org-export-as 'html nil nil t '(:with-toc nil :section-numbers nil))))
     (message (format "Writing to %s" target-file))
     (with-temp-file target-file
       (insert metadata)
@@ -142,6 +149,7 @@
 
 (defun gimel-batch-process-org-files ()
   "Batch process all Org files from the source directory and save HTML output in the target directory."
+  (interactive)
   (delete-directory (gimel-get-target-path) t)
   (let ((source-dir (gimel-get-source-path))
         files)
@@ -158,7 +166,7 @@
 
 (defun gimel-run-on-save ()
   "Run `gimel-org-to-html-with-metadata' if `gimel-auto-publish' is non-nil."
-  (when (and (boundp 'gimel-auto-publish) gimel-auto-publish)
+  (when (and (eq major-mode 'org-mode) (boundp 'gimel-auto-publish) gimel-auto-publish)
     (progn
       (gimel-copy-asset-files)
       (gimel-org-to-html-with-metadata))))
