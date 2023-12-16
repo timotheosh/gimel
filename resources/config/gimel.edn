@@ -3,4 +3,7 @@
   {:source-dir "resources/src"
    :webroot "docs/"
    :template "resources/templates/html5-page-layout"
-   :footer "Powered by Gimel"}}}
+   :footer "Powered by Gimel"
+   :web-url "https://naurrnen.selfdidactic.com"}
+  :database
+  {:dbname "gimel.db"}}}
