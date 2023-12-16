@@ -10,6 +10,7 @@
             [gimel.templates :as tmpl]
             [gimel.highlight :as highlight]
             [gimel.markdown :refer [markdown-pages]]
+            [gimel.partial-pages :refer [partial-pages]]
             [gimel.static-files :refer [copy-files]]
             [gimel.database :refer [create-database]]
             [gimel.sitemap :refer [gen-sitemap]]))
@@ -27,21 +28,11 @@
     (if (.exists file)
       (slurp file))))
 
-(defn page-layout
-  [page]
-  (string/join (tmpl/public-page
-                {:text (:html page)
-                 :navbar (html [:h1 "HEAD"])
-                 :footer footer})))
-
-(defn partial-pages [pages]
-  (zipmap (keys pages)
-          (map #(page-layout %) (vals pages))))
 
 (defn get-raw-pages []
   (stasis/merge-page-sources
    {:public (stasis/slurp-directory source-dir #".*\.(css|js)$")
-    :partials (partial-pages (stasis/slurp-directory source-dir #".*\.html$"))
+    :partials (partial-pages (stasis/slurp-directory source-dir #".*\.html$") (get-navbar-html))
     :markdown (markdown-pages (stasis/slurp-directory source-dir #".*\.md$") (get-navbar-html))}))
 
 (defn prepare-page [page]

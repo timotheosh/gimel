@@ -73,16 +73,17 @@
                                 (replace-regexp-in-string (regexp-quote source-dir) "" (buffer-file-name))))
             ".html")))
 
-(defun gimel-copy-image-files ()
-  "Copy all image files from the source directory to the target directory."
+(defun gimel-copy-asset-files ()
+  "Copy all asset files from the source directory to the target directory."
   (let ((source-dir (gimel-get-source-path))
         (target-dir (gimel-get-target-path))
-        (image-extensions '("\\.jpg$" "\\.png$" "\\.gif$"))  ; Add more extensions as needed
+        (asset-extensions '("\\.jpg$" "\\.png$" "\\.gif$"
+                            "\\.webp$" "\\.js$" "\\.css$"))  ; Add more extensions as needed
         files)
-    ;; Find all image files
-    (dolist (ext image-extensions)
+    ;; Find all asset files
+    (dolist (ext asset-extensions)
       (setq files (append files (directory-files-recursively source-dir ext))))
-    ;; Copy each image file to the target directory
+    ;; Copy each asset file to the target directory
     (dolist (file files)
       (let ((target-file (gimel-path-append target-dir (file-relative-name file source-dir))))
         (make-directory (file-name-directory target-file) t)
@@ -131,7 +132,7 @@
       (insert org-content)
       (org-mode)
       (gimel-preprocessors)
-      (setq html-content (org-export-as 'html nil nil t nil)))
+      (setq html-content (org-export-as 'html nil nil t '(:with-toc nil))))
     (message (format "Writing to %s" target-file))
     (with-temp-file target-file
       (insert metadata)
@@ -154,6 +155,13 @@
 
 ;; Example CLI command using Emacs batch mode:
 ;; emacs --batch -l gimel.el --eval '(gimel-batch-process-org-files "/path/to/source" "/path/to/target")'
+
+(defun gimel-run-on-save ()
+  "Run `gimel-org-to-html-with-metadata' if `gimel-auto-publish' is non-nil."
+  (when (and (boundp 'gimel-auto-publish) gimel-auto-publish)
+    (progn
+      (gimel-copy-asset-files)
+      (gimel-org-to-html-with-metadata))))
 
 (provide 'gimel)
 ;;; gimel.el ends here

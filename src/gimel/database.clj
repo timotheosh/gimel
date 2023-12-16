@@ -98,7 +98,7 @@
     (create-meta-link key pid mid)))
 
 (defn insert-data [url metadata content]
-  (let [title (:Title metadata)]
+  (let [title (or (:Title metadata) (:title metadata))]
     (doseq [[key val] (dissoc metadata :Title)]
       (let [pid (insert-page url title content)]
         (if (and (not (string? val)) (seq? val))

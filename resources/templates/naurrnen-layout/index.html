@@ -12,7 +12,14 @@
 </head>
 
 <body>
+	<script>
+                addEventListener("load", expandRootMenu);
+                addEventListener("load", toggleContainer);
+        </script>
+	<span class="openbtn" style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
+        <div id="side-nav" class="sidenav">
 	<nav>navigation bar</nav>
+	</div>
 	<main>
 		<section id="pageContent">
 			<article>
