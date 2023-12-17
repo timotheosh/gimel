@@ -139,6 +139,7 @@
                               (let ((url (match-string 1 match)))
                                 (if (or (string-prefix-p "http://" url)
                                         (string-prefix-p "https://" url)
+                                        (string-prefix-p "javascript" url)
                                         (string-prefix-p "/" url))
                                     match
                                   (concat "href=\"/" url "\""))))
