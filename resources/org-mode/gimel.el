@@ -34,7 +34,14 @@
   :type '(string)
   :group 'paths)
 
+(defcustom gimel-navbar-file "navbar.org"
+  "The org-mode file used as a navigatio bar for the entire project's web site."
+  :type '(string)
+  :group 'paths)
+
 (defun gimel-split-org-content ()
+  "Splits the org document on the first section. First part is treated as metadata.
+   The second part is your document to be exported as html."
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -72,6 +79,7 @@
   (gimel-path-append (projectile-project-root) gimel-target-path))
 
 (defun gimel-target-path ()
+  "Determines the target path for the exported document."
   (let ((source-dir (gimel-get-source-path))
         (target-dir (gimel-get-target-path)))
     (concat (file-name-sans-extension
@@ -98,7 +106,6 @@
 
 (defun gimel-generate-id-from-heading (heading)
   "Generate a URL-friendly custom ID based on the given HEADING."
-  ;; Convert heading to a URL-friendly format (e.g., lowercase, replace spaces and special chars)
   (downcase (replace-regexp-in-string "[^a-zA-Z0-9]+" "-" heading)))
 
 (defun gimel-add-custom-ids-to-headers ()
@@ -125,10 +132,23 @@
   (gimel-add-custom-ids-to-headers)
   (gimel-preprocess-org-links))
 
+(defun gimel-postprocess-navbar-links (html-content)
+  "Replace relative links in STR with absolute links."
+  (replace-regexp-in-string "href=\"\\([^\"]*\\)\""
+                            (lambda (match)
+                              (let ((url (match-string 1 match)))
+                                (if (or (string-prefix-p "http://" url)
+                                        (string-prefix-p "https://" url)
+                                        (string-prefix-p "/" url))
+                                    match
+                                  (concat "href=\"/" url "\""))))
+                            html-content))
+
 (defun gimel-org-to-html-with-metadata ()
   "Converts an org-mode file to an HTML snippet and adds YAML metadata (from the file-level settings)  at the top."
   (interactive)
-  (let* ((target-file (gimel-target-path))
+  (let* ((source-buffer buffer-file-name)
+         (target-file (gimel-target-path))
          (split-content (gimel-split-org-content))
          (metadata (gimel-org-metadata-to-yaml (car split-content)))
          (org-content (cadr split-content))
@@ -139,7 +159,11 @@
       (insert org-content)
       (org-mode)
       (gimel-preprocessors)
-      (setq html-content (org-export-as 'html nil nil t '(:with-toc nil :section-numbers nil))))
+      (let ((content (org-export-as 'html nil nil t '(:with-toc nil :section-numbers nil))))
+        (if (and gimel-navbar-file
+                 (string= (eshell/basename source-buffer) gimel-navbar-file))
+            (setq html-content (gimel-postprocess-navbar-links content))
+          (setq html-content content))))
     (message (format "Writing to %s" target-file))
     (with-temp-file target-file
       (insert metadata)
