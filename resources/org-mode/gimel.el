@@ -39,6 +39,11 @@
   :type '(string)
   :group 'paths)
 
+(defcustom gimel-auto-publish nil
+  "Whether or not to activate auto-publish on document save."
+  :type '(string)
+  :group 'paths)
+
 (defun gimel-split-org-content ()
   "Splits the org document on the first section. First part is treated as metadata.
    The second part is your document to be exported as html."
@@ -51,14 +56,14 @@
           (list first-part second-part))
       (error "No headers found"))))
 
-
 (defun gimel-org-metadata-to-yaml (org-content)
   "Converts the org-mode file-level metadata in a string into yaml format."
   (let ((lines (split-string org-content "\n"))
         (yaml-content '())
         (found-metadata nil))
     (dolist (line lines)
-      (when (string-match "^#\\+\\(.*?\\): \\(.*\\)$" line)
+      (when (and (string-match "^#\\+\\(.*?\\): \\(.*\\)$" line)
+                 (not (string-match "^#\\+\\(startup\\|options\\):" line)))  ; Exclude startup and options
         (unless found-metadata
           (push "---" yaml-content)
           (setq found-metadata t))
@@ -69,6 +74,7 @@
         (progn  (push "---" yaml-content)
                 (mapconcat 'identity (reverse yaml-content) "\n"))
       "")))
+
 
 (defun gimel-get-source-path ()
   "Returns the source path."
@@ -176,6 +182,7 @@
   "Batch process all Org files from the source directory and save HTML output in the target directory."
   (interactive)
   (delete-directory (gimel-get-target-path) t)
+  (gimel-copy-asset-files)
   (let ((source-dir (gimel-get-source-path))
         files)
     (setq files (directory-files-recursively source-dir "\\.org$"))
@@ -193,7 +200,7 @@
   "Run `gimel-org-to-html-with-metadata' if `gimel-auto-publish' is non-nil."
   (when (and (eq major-mode 'org-mode) (boundp 'gimel-auto-publish) gimel-auto-publish)
     (progn
-      (gimel-copy-asset-files)
+      ;;(gimel-copy-asset-files)
       (gimel-org-to-html-with-metadata))))
 
 (provide 'gimel)

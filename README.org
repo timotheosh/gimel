@@ -3,7 +3,14 @@
   :CUSTOM_ID: gimel
   :END:
 
-Flat file CMS in Clojure. This watches a directory for markdown and html snippets, and then transforms those into web pages for a static site. You can then either copy the resulting files to your static website, or just run this as your webserver, as it serves your static pages by default. In the future, this will have an admin page you can log into to manage it.
+Static site generator in Clojure, with /some/ potential to become a CMS. This watches a directory for markdown and html snippets, and then transforms those into web pages for a static site. Iyt will also collect metadata from those files and store them in a sqlite database.
+
+At some point, I may use the data generated in the database as a means for generating menus and "related links" section for the sites.
+
+** org-mode
+I've been utterly disatisified with available org-mode parsers, but that is how most of my content is created. So I created an Emacs package that will properly convert links, add id's to section headers. It can be run in batch mode, but batch mode is almost as slow as org-publish. So individual files can be exported on save. File-lelev properties for org-mode files are saved as metadata and stored in the sqlite database.
+
+
 
 ** Installation
    :PROPERTIES:
@@ -17,6 +24,8 @@ Flat file CMS in Clojure. This watches a directory for markdown and html snippet
 2. Change settings in ~gimel/resources/config/gimel.edn~ to fit your usage.
 3. Run ~lein run~ or ~lein ring server~
 
+**
+
 ** License
    :PROPERTIES:
    :CUSTOM_ID: license
@@ -27,7 +36,7 @@ Flat file CMS in Clojure. This watches a directory for markdown and html snippet
     :CUSTOM_ID: mit-license
     :END:
 
-Copyright © 2019 Tim Hawes
+Copyright © 2019-2024 Tim Hawes
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the

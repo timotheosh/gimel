@@ -27,7 +27,7 @@
 (defn gen-sitemap []
   (let [grammar-matcher (.getPathMatcher
                          (java.nio.file.FileSystems/getDefault)
-                         "glob:*.{pdf,md}")]
+                         "glob:*.{pdf,md,html}")]
     (->> source-dir
          io/file
          file-seq

@@ -9,5 +9,7 @@
   (export)
   (reset! watcher
           (watch-dir
-           (fn [event] (export))
+           (fn [event]
+             (println event)
+             (export))
            (io/file source-dir))))
