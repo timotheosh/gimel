@@ -15,6 +15,7 @@
   (-> (.getAbsolutePath io-file)
       (string/replace (re-pattern source-dir) "")
       (string/replace #"\.md$" ".html")
+      (string/replace #"\.org$" ".html")
       ((fn [x] (path-append web-url x)))))
 
 (defn file-data
@@ -24,15 +25,17 @@
    :lastmod (str (tick/date (java.util.Date. (.lastModified io-file))))
    :changefreq "monthly"})
 
-(defn gen-sitemap []
-  (let [grammar-matcher (.getPathMatcher
-                         (java.nio.file.FileSystems/getDefault)
-                         "glob:*.{pdf,md,html}")]
-    (->> source-dir
-         io/file
-         file-seq
-         (filter #(.isFile %))
-         (filter #(.matches grammar-matcher (.getFileName (.toPath %))))
-         (mapv #(file-data %))
-         generate-sitemap
-         (spit (str (path-append webroot "/sitemap.xml"))))))
+(defn gen-sitemap
+  ([] (gen-sitemap source-dir webroot))
+  ([source public]
+   (let [grammar-matcher (.getPathMatcher
+                          (java.nio.file.FileSystems/getDefault)
+                          "glob:*.{pdf,md,org,html}")]
+     (->> source
+          io/file
+          file-seq
+          (filter #(.isFile %))
+          (filter #(.matches grammar-matcher (.getFileName (.toPath %))))
+          (mapv #(file-data %))
+          generate-sitemap
+          (spit (str (path-append public "/sitemap.xml")))))))

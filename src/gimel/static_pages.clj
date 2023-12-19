@@ -1,9 +1,7 @@
 (ns gimel.static-pages
-  (:require [clojure.string :as string]
-            [clojure.java.io :as io]
+  (:require [clojure.java.io :as io]
             [optimus.export]
             [optimus.optimizations :as optimizations]
-            [hiccup.core :refer [html]]
             [stasis.core :as stasis]
             [gimel.config :as config]
             [gimel.os :as os]
@@ -18,22 +16,20 @@
 (def public-conf (:public (:configuration @(config/read-config))))
 (def source-dir (:source-dir public-conf))
 (def webroot (:webroot public-conf))
-(def footer (:footer public-conf))
-
+(def sitemap-source (or (:sitemap-source public-conf) source-dir))
 
 (defn get-navbar-html
   "Gets a pre-exisitng navigation bar in an html file, and returns it as a string."
-  []
-  (let [file (io/file (os/path-append source-dir "navbar.html"))]
+  [source]
+  (let [file (io/file (os/path-append source "navbar.html"))]
     (if (.exists file)
       (slurp file))))
 
-
-(defn get-raw-pages []
+(defn get-raw-pages [source]
   (stasis/merge-page-sources
-   {:public (stasis/slurp-directory source-dir #".*\.(css|js)$")
-    :partials (partial-pages (stasis/slurp-directory source-dir #".*\.html$") (get-navbar-html))
-    :markdown (markdown-pages (stasis/slurp-directory source-dir #".*\.md$") (get-navbar-html))}))
+   {:public (stasis/slurp-directory source #".*\.(css|js)$")
+    :partials (partial-pages (stasis/slurp-directory source #".*\.html$") (get-navbar-html source))
+    :markdown (markdown-pages (stasis/slurp-directory source #".*\.md$") (get-navbar-html source))}))
 
 (defn prepare-page [page]
   (-> (if (string? page) page (page))
@@ -43,22 +39,18 @@
   (zipmap (keys pages)
           (map #(prepare-page %) (vals pages))))
 
-(defn get-pages []
-  (prepare-pages (get-raw-pages)))
+(defn get-pages [source]
+  (prepare-pages (get-raw-pages source)))
 
-(defn export []
-  (create-database)
-  (let [assets (optimizations/all (tmpl/get-assets) {})]
-    (stasis/empty-directory! webroot)
-    (optimus.export/save-assets assets webroot)
-    (stasis/export-pages (get-pages) webroot {:optimus-assets assets})
-    (copy-files source-dir webroot [".jpg" ".png" ".gif" ".webp" ".js" ".css"])
-    (gen-sitemap)))
-
-(defn old-export []
-  (let [assets (optimizations/all (tmpl/get-assets) {})]
-    (stasis/empty-directory! webroot)
-    (optimus.export/save-assets assets webroot)
-    (stasis/export-pages (get-pages) webroot {:optimus-assets assets})
-    (copy-files source-dir webroot [".jpg" ".png" ".gif" ".webp"])
-    (gen-sitemap)))
+(defn export
+  "Wipes public directory and recreates website from source to public."
+  ([] (export source-dir webroot sitemap-source))
+  ([source public] (export source public sitemap-source))
+  ([source public sitemap]
+   (create-database)
+   (let [assets (optimizations/all (tmpl/get-assets) {})]
+     (stasis/empty-directory! public)
+     (optimus.export/save-assets assets public)
+     (stasis/export-pages (get-pages source) public {:optimus-assets assets})
+     (copy-files source-dir public [".jpg" ".png" ".gif" ".webp" ".js" ".css"])
+     (gen-sitemap sitemap public))))

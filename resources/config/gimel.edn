@@ -1,6 +1,7 @@
 {:configuration
  {:public
-  {:source-dir "resources/src"
+  {:sitemap-path "resources/src"
+   :source-dir "resources/src"
    :webroot "docs/"
    :template "resources/templates/html5-page-layout"
    :footer "Powered by Gimel"

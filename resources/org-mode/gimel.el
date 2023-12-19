@@ -19,6 +19,8 @@
 ;;
 ;;; Code:
 
+(require 'url)
+
 (defun gimel-path-append (&rest paths)
   "Join multiple PATHS into a single path with forward slashes."
   (let ((joined-path (mapconcat 'identity paths "/")))
@@ -43,6 +45,18 @@
   "Whether or not to activate auto-publish on document save."
   :type '(string)
   :group 'paths)
+
+(defcustom gimel-api-endpoint "http://localhost:8880"
+  "The endpoint for gimel API."
+  :type '(string)
+  :group 'paths)
+
+(defun gimel-export ()
+  (url-retrieve (concat gimel-api-endpoint "/api/export")
+                (lambda (status)
+                  (if (plist-get status :error)
+                      (format "Gimel returned error http status: %s" status)
+                    (message "gimel site exported")))))
 
 (defun gimel-split-org-content ()
   "Splits the org document on the first section. First part is treated as metadata.
@@ -200,8 +214,9 @@
   "Run `gimel-org-to-html-with-metadata' if `gimel-auto-publish' is non-nil."
   (when (and (eq major-mode 'org-mode) (boundp 'gimel-auto-publish) gimel-auto-publish)
     (progn
-      ;;(gimel-copy-asset-files)
-      (gimel-org-to-html-with-metadata))))
+      (gimel-copy-asset-files)
+      (gimel-org-to-html-with-metadata)
+      (gimel-export))))
 
 (provide 'gimel)
 ;;; gimel.el ends here

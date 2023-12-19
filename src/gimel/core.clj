@@ -3,7 +3,8 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.adapter.jetty :as jetty]
             [gimel.config :as config]
-            [gimel.watcher :refer [start-watcher]])
+            [gimel.watcher :refer [start-watcher]]
+            [gimel.api.core :refer [handler]])
   (:gen-class))
 
 (def webroot (:webroot (:public (:configuration @(config/read-config)))))
@@ -12,11 +13,11 @@
   "I don't do a whole lot ... yet."
   [& args]
   (def app
-    (-> (fn [request] {:status 404 :body "Not Found"})
+    (-> handler
         (wrap-defaults site-defaults)
         (wrap-file webroot)))
 
-  (start-watcher)
+  ;;(start-watcher)
   (defonce server (jetty/run-jetty
                    app
                    {:port 8880
