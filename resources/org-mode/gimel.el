@@ -70,6 +70,19 @@
           (list first-part second-part))
       (error "No headers found"))))
 
+(defun gimel-handle-key-value-properties (key value)
+  "Converts a key-value property into YAML format."
+  (if (or (string-prefix-p "[" value)
+          (string-prefix-p "\"" value)
+          (string-prefix-p "{" value))
+      (let ((json-value (json-read-from-string value)))
+        (if (vectorp json-value)
+            (concat (format "%s:" (downcase key))
+                    (mapconcat (lambda (item) (format "\n  - %s" item))
+                               json-value ""))
+          (format "%s:\n  - %s" (downcase key) json-value)))
+    (format "%s: \"%s\"" (downcase key) value)))
+
 (defun gimel-org-metadata-to-yaml (org-content)
   "Converts the org-mode file-level metadata in a string into yaml format."
   (let ((lines (split-string org-content "\n"))
@@ -83,7 +96,7 @@
           (setq found-metadata t))
         (let ((key (match-string 1 line))
               (value (match-string 2 line)))
-          (push (format "%s: \"%s\"" (downcase key) value) yaml-content))))
+          (push (gimel-handle-key-value-properties key value) yaml-content))))
     (if found-metadata
         (progn  (push "---" yaml-content)
                 (mapconcat 'identity (reverse yaml-content) "\n"))
