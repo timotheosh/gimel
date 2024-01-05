@@ -225,6 +225,7 @@
 
 (defun gimel-run-on-save ()
   "Run `gimel-org-to-html-with-metadata' if `gimel-auto-publish' is non-nil."
+  (interactive)
   (when (and (eq major-mode 'org-mode) (boundp 'gimel-auto-publish) gimel-auto-publish)
     (progn
       (gimel-copy-asset-files)
