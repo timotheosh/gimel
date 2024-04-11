@@ -10,7 +10,8 @@
                                       :dbname dbfile}))
 
 (defn delete-database []
-  (io/delete-file dbfile))
+  (when (.exists (io/file dbfile))
+    (io/delete-file dbfile)))
 
 (defn- match-valid-table-or-column-name?
   "Retruns match if data is a valid table or column name."

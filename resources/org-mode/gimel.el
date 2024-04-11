@@ -55,7 +55,7 @@
   (url-retrieve (concat gimel-api-endpoint "/api/export")
                 (lambda (status)
                   (if (plist-get status :error)
-                      (format "Gimel returned error http status: %s" status)
+                      (message (format "Gimel returned error http status: %s" status))
                     (message "gimel site exported")))))
 
 (defun gimel-split-org-content ()
