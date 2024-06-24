@@ -1,7 +1,8 @@
 (ns gimel.watcher
   (:require [clojure.java.io :as io]
             [juxt.dirwatch :refer [watch-dir]]
-            [gimel.static-pages :refer [source-dir export]]))
+            [gimel.config :refer [get-source-dir]]
+            [gimel.static-pages :refer [export]]))
 
 (def watcher (atom nil))
 
@@ -12,4 +13,4 @@
            (fn [event]
              (println event)
              (export))
-           (io/file source-dir))))
+           (io/file (get-source-dir)))))

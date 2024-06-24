@@ -1,8 +1,6 @@
 (ns gimel.handler
   (:require [ring.middleware.file :refer [wrap-file]]
-            [gimel.config :as config]))
-
-(def webroot (:webroot (:public (:configuration @(config/read-config)))))
+            [gimel.config :refer [get-webroot]]))
 
 (defn wrap-html-content-type [handler]
   (fn [request]
@@ -13,4 +11,4 @@
 
 (def dev-app
   (-> (fn [request] {:status 404 :body "Not Found"})
-      (wrap-file webroot)))
+      (wrap-file (get-webroot))))

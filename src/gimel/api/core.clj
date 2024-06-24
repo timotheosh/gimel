@@ -41,11 +41,9 @@
   ["/not-found"
    (fn [_] {:status 404 :body "Not Found"})])
 
-(def router
-  (ring/router
-   [["/api/export" export-site-config]
-    ["/api/export-custom" export-site-custom]
-    not-found-route]))
-
-(def handler
-  (ring/ring-handler router))
+(defn create-handler []
+  (ring/ring-handler
+   (ring/router
+    [["/api/export" export-site-config]
+     ["/api/export-custom" export-site-custom]
+     not-found-route])))
