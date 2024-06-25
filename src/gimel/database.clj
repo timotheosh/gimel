@@ -3,15 +3,17 @@
             [clojure.string :as string]
             [clojure.java.io :as io]
             [next.jdbc :as jdbc]
-            [gimel.config :as config]))
+            [mount.core :refer [defstate]]
+            [gimel.config :refer [get-dbname]]))
 
-(def dbfile "gimel")
-(def datasource (jdbc/get-datasource {:dbtype "sqlite"
-                                      :dbname dbfile}))
+(defstate datasource
+  :start (jdbc/get-datasource {:dbtype "sqlite"
+                               :dbname (get-dbname)}))
 
 (defn delete-database []
-  (when (.exists (io/file dbfile))
-    (io/delete-file dbfile)))
+  (let [dbfile (get-dbname)]
+    (when (.exists (io/file dbfile))
+      (io/delete-file dbfile))))
 
 (defn- match-valid-table-or-column-name?
   "Retruns match if data is a valid table or column name."

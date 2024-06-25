@@ -3,6 +3,7 @@
             [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
             [ring.adapter.jetty :as jetty]
             [clojure.tools.cli :refer [parse-opts]]
+            [mount.core :as mount]
             [gimel.config :refer [load-config get-config]]
             [gimel.watcher :refer [start-watcher]]
             [gimel.api.core :refer [create-handler]])
@@ -22,6 +23,7 @@
   [& args]
   (let [options (parse-opts args cli-options)]
     (load-config (:configfile (:options options)))
+    (mount/start)
     (let [config (get-config)
           webroot (:webroot (:public (:configuration config)))
           app (-> (create-handler)
