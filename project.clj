@@ -18,7 +18,8 @@
                  [tick "0.7.5"]
                  [sitemap "0.4.0"]
                  [com.github.seancorfield/next.jdbc "1.3.909"]
-                 [org.xerial/sqlite-jdbc "3.44.1.0"]]
+                 [org.xerial/sqlite-jdbc "3.44.1.0"]
+                 [org.clojure/tools.cli "1.1.230"]]
   :plugins [[lein-ring "0.12.5"]]
   :ring {:port 8880
          :handler gimel.handler/dev-app

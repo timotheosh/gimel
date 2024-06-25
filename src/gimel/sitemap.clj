@@ -3,20 +3,16 @@
             [clojure.string :as string]
             [tick.core :as tick]
             [sitemap.core :refer [generate-sitemap]]
-            [gimel.config :as config]
+            [gimel.config :refer [get-source-dir get-web-url]]
             [gimel.os :refer [path-append]]))
 
-(def public-conf (:public (:configuration @(config/read-config))))
-(def source-dir (:source-dir public-conf))
-(def webroot (:webroot public-conf))
-(def web-url (:web-url public-conf))
 
 (defn path->url [io-file]
   (-> (.getAbsolutePath io-file)
-      (string/replace (re-pattern source-dir) "")
+      (string/replace (re-pattern (get-source-dir)) "")
       (string/replace #"\.md$" ".html")
       (string/replace #"\.org$" ".html")
-      ((fn [x] (path-append web-url x)))))
+      ((fn [x] (path-append (get-web-url) x)))))
 
 (defn file-data
   "Returns relevant file data for generating a sitemap."
@@ -26,16 +22,15 @@
    :changefreq "monthly"})
 
 (defn gen-sitemap
-  ([] (gen-sitemap source-dir webroot))
-  ([source public]
-   (let [grammar-matcher (.getPathMatcher
-                          (java.nio.file.FileSystems/getDefault)
-                          "glob:*.{pdf,md,org,html}")]
-     (->> source
-          io/file
-          file-seq
-          (filter #(.isFile %))
-          (filter #(.matches grammar-matcher (.getFileName (.toPath %))))
-          (mapv #(file-data %))
-          generate-sitemap
-          (spit (str (path-append public "/sitemap.xml")))))))
+  [source web-url]
+  (let [grammar-matcher (.getPathMatcher
+                         (java.nio.file.FileSystems/getDefault)
+                         "glob:*.{pdf,md,org,html}")]
+    (->> source
+         io/file
+         file-seq
+         (filter #(.isFile %))
+         (filter #(.matches grammar-matcher (.getFileName (.toPath %))))
+         (mapv #(file-data %))
+         generate-sitemap
+         (spit (str (path-append web-url "/sitemap.xml"))))))

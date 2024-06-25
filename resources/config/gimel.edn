@@ -5,6 +5,7 @@
    :webroot "docs/"
    :template "resources/templates/html5-page-layout"
    :footer "Powered by Gimel"
-   :web-url "https://naurrnen.selfdidactic.com"}
+   :web-url "https://naurrnen.selfdidactic.com"
+   :port 8080}
   :database
   {:dbname "gimel.db"}}}

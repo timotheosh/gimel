@@ -3,7 +3,7 @@
             [optimus.export]
             [optimus.optimizations :as optimizations]
             [stasis.core :as stasis]
-            [gimel.config :as config]
+            [gimel.config :refer [get-config get-source-dir get-webroot get-sitemap-source]]
             [gimel.os :as os]
             [gimel.templates :as tmpl]
             [gimel.highlight :as highlight]
@@ -12,11 +12,6 @@
             [gimel.static-files :refer [copy-files]]
             [gimel.database :refer [create-database]]
             [gimel.sitemap :refer [gen-sitemap]]))
-
-(def public-conf (:public (:configuration @(config/read-config))))
-(def source-dir (:source-dir public-conf))
-(def webroot (:webroot public-conf))
-(def sitemap-source (or (:sitemap-source public-conf) source-dir))
 
 (defn get-navbar-html
   "Gets a pre-exisitng navigation bar in an html file, and returns it as a string."
@@ -44,13 +39,14 @@
 
 (defn export
   "Wipes public directory and recreates website from source to public."
-  ([] (export source-dir webroot sitemap-source))
-  ([source public] (export source public sitemap-source))
+  ([] (export (get-source-dir) (get-webroot) (get-sitemap-source)))
+  ([source public] (export source public (get-sitemap-source)))
   ([source public sitemap]
+   (println (str "Using config data: " (get-config)))
    (create-database)
    (let [assets (optimizations/all (tmpl/get-assets) {})]
      (stasis/empty-directory! public)
      (optimus.export/save-assets assets public)
      (stasis/export-pages (get-pages source) public {:optimus-assets assets})
-     (copy-files source-dir public [".jpg" ".png" ".gif" ".webp" ".js" ".css"])
+     (copy-files source public [".jpg" ".png" ".gif" ".webp" ".js" ".css"])
      (gen-sitemap sitemap public))))

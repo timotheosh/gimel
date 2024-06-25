@@ -7,13 +7,9 @@
             [cybermonday.ir :as ir]
             [cybermonday.core :as cm]
             [cybermonday.utils :refer [gen-id make-hiccup-node]]
-            [gimel.config :as config]
+            [gimel.config :refer [get-footer]]
             [gimel.templates :as tmpl]
             [gimel.database :as db]))
-
-(def public-conf (:public (:configuration @(config/read-config))))
-(def footer (:footer public-conf))
-
 
 (defn flexmark-headers
   "Cybermonkey lowering function that autocreates anchor links for all headers."
@@ -54,11 +50,11 @@
 
 (defn md-page-layout
   [page]
-  (string/join (tmpl/public-page
-                {:title (:title page)
-                 :text (:html page)
-                 :navbar (:navbar page)
-                 :footer footer})))
+  (tmpl/render-public-page
+   {:title (:title page)
+    :text (:html page)
+    :navbar (:navbar page)
+    :footer (get-footer)}))
 
 (defn process-markdown
   "Preprocesses the markdown file for cybermonday."

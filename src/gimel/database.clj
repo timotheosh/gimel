@@ -5,7 +5,7 @@
             [next.jdbc :as jdbc]
             [gimel.config :as config]))
 
-(def dbfile (:dbname (:database (:configuration @(config/read-config)))))
+(def dbfile "gimel")
 (def datasource (jdbc/get-datasource {:dbtype "sqlite"
                                       :dbname dbfile}))
 
