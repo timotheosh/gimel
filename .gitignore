@@ -24,4 +24,4 @@ pom.xml.asc
 /.nrepl-port
 .clj-kondo/
 
-gimel.db
+*.db

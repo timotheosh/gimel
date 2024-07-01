@@ -17,6 +17,7 @@
                  [juxt/dirwatch "0.2.5"]
                  [tick "0.7.5"]
                  [sitemap "0.4.0"]
+                 [mount "0.1.18"]
                  [com.github.seancorfield/next.jdbc "1.3.909"]
                  [org.xerial/sqlite-jdbc "3.44.1.0"]
                  [org.clojure/tools.cli "1.1.230"]]
