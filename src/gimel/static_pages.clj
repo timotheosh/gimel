@@ -42,7 +42,6 @@
   ([] (export (get-source-dir) (get-webroot) (get-sitemap-source)))
   ([source public] (export source public (get-sitemap-source)))
   ([source public sitemap]
-   (println (str "Using config data: " (get-config)))
    (create-database)
    (let [assets (optimizations/all (tmpl/get-assets) {})]
      (stasis/empty-directory! public)

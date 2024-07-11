@@ -8,7 +8,3 @@
       (if (.endsWith (:uri request) ".html")
         (assoc-in response [:headers "Content-Type"] "text/html")
         response))))
-
-(def dev-app
-  (-> (fn [request] {:status 404 :body "Not Found"})
-      (wrap-file (get-webroot))))

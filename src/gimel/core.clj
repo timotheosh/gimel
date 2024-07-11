@@ -5,7 +5,6 @@
             [clojure.tools.cli :refer [parse-opts]]
             [mount.core :as mount]
             [gimel.config :refer [load-config get-config]]
-            [gimel.watcher :refer [start-watcher]]
             [gimel.api.core :refer [create-handler]])
   (:gen-class))
 
