@@ -3,14 +3,10 @@
   :CUSTOM_ID: gimel
   :END:
 
-Static site generator in Clojure, with /some/ potential to become a CMS. This watches a directory for markdown and html snippets, and then transforms those into web pages for a static site. Iyt will also collect metadata from those files and store them in a sqlite database.
+Static site generator in Clojure, with /some/ potential to become a CMS. It will also collect metadata from those files and store them in a sqlite database.
 
-At some point, I may use the data generated in the database as a means for generating menus and "related links" section for the sites.
-
-** org-mode
-I've been utterly disatisified with available org-mode parsers, but that is how most of my content is created. So I created an Emacs package that will properly convert links, add id's to section headers. It can be run in batch mode, but batch mode is almost as slow as org-publish. So individual files can be exported on save. File-lelev properties for org-mode files are saved as metadata and stored in the sqlite database.
-
-
+** Description
+~gimel~, like most staic website generators, is an "opinionated" implementation. It fits a particular workflow. It originally watched a directory for file changes and then convert any changed files into html for a static site. I tried maintaining my websites in markdown, but becamw eutterly dissatisfied, as I had been maintaing my websites as org-mode projects. Org-mode publish became slow as the site grew, and I needed something faster. Dissatisfied with the the current state of org-mode parsers in any language, except elisp, I opted for a different path forward. So I created an Emacs package that minimally convert org-mode files into html snippets. ~gimel.el~ will properly convert links, add id's to section headers. It can be run in batch mode, but batch mode is almost as slow as org-publish. So individual files can be exported on save. File-level properties for org-mode files are saved as metadata and stored in the sqlite database.
 
 ** Installation
    :PROPERTIES:
@@ -22,9 +18,11 @@ I've been utterly disatisified with available org-mode parsers, but that is how 
    git clone https://github.com/timotheosh/gimel.git
    #+END_SRC
 2. Change settings in ~gimel/resources/config/gimel.edn~ to fit your usage.
-3. Run ~lein run~ or ~lein ring server~
+   You can just copy it to ~~/.config/gimel/gimel.edn~ and then make changes to it. Gimel willl look for the settings file there before defaulting to the one under resources. You can also just copy it anywhere and run with ~lein run --config <path to configfile>~ or use the same parameters with the uberjar, if you so choose to compile before using it.
+3. Run ~lein run~
 
-**
+** Future
+At some point, I may use the data generated in the database as a means for generating menus and "related links" section for the sites.
 
 ** License
    :PROPERTIES:

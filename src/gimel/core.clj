@@ -1,11 +1,12 @@
 (ns gimel.core
-  (:require [ring.middleware.file :refer [wrap-file]]
-            [ring.middleware.defaults :refer [site-defaults wrap-defaults]]
+  (:require [gimel.api.core :refer [create-api-handler]]
+            [ring.middleware.defaults :refer [wrap-defaults site-defaults]]
+            [ring.middleware.file :refer [wrap-file]]
+            [ring.middleware.not-modified :refer [wrap-not-modified]]
             [ring.adapter.jetty :as jetty]
-            [clojure.tools.cli :refer [parse-opts]]
             [mount.core :as mount]
-            [gimel.config :refer [load-config get-config]]
-            [gimel.api.core :refer [create-handler]])
+            [clojure.tools.cli :refer [parse-opts]]
+            [gimel.config :refer [load-config get-config]])
   (:gen-class))
 
 (def cli-options
@@ -18,16 +19,19 @@
    ["-h" "--help"]])
 
 (defn -main
-  "I don't do a whole lot ... yet."
   [& args]
   (let [options (parse-opts args cli-options)]
     (load-config (:configfile (:options options)))
     (mount/start)
     (let [config (get-config)
           webroot (:webroot (:public (:configuration config)))
-          app (-> (create-handler)
-                  (wrap-defaults site-defaults)
-                  (wrap-file webroot))]
+          api-handler (create-api-handler)
+          static-handler (wrap-file (wrap-defaults (fn [_] {:status 404}) site-defaults) webroot)
+          app (fn [request]
+                (let [response (static-handler request)]
+                  (if (= 404 (:status response))
+                    (api-handler request)
+                    response)))]
       (defonce server (jetty/run-jetty
                        app
                        {:port (or (:port (:options options)) (:port (:public (:configuration config))) 3000)

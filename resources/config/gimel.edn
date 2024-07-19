@@ -1,8 +1,8 @@
 {:configuration
  {:public
   {:sitemap-path "resources/src"
-   :source-dir "resources/src"
-   :webroot "docs/"
+   :source-dir "resources/html"
+   :webroot "resources/public"
    :template "resources/templates/html5-page-layout"
    :footer "Powered by Gimel"
    :web-url "https://naurrnen.selfdidactic.com"

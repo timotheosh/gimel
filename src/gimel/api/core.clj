@@ -37,6 +37,28 @@
            (let [data (:export-data context)]
              (export-site data))))
 
+(defn wrap-api-404 [handler]
+  (fn [request]
+    (let [response (handler request)]
+      (if (= 404 (:status response))
+        ;; Return your custom 404 response for API routes
+        {:status 404
+         :headers {"Content-Type" "application/json"}
+         :body "{\"error\": \"API endpoint not found\"}"}
+        response))))
+
+(defn not-found-handler []
+  {:status 404
+   :headers {"Content-Type" "application/json"}
+   :body "{\"error\": \"API endpoint not found\"}"})
+
+(defn create-api-handler []
+  (let [api-routes [["/api/export" export-site-config]
+                    ["/api/export-custom" export-site-custom]]
+        router (ring/router api-routes {:data {:middleware [wrap-api-404]}})
+        default-handler (ring/create-default-handler {:not-found not-found-handler})]
+    (ring/ring-handler router default-handler)))
+
 (def not-found-route
   ["/not-found"
    (fn [_] {:status 404 :body "Not Found"})])
