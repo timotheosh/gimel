@@ -47,7 +47,7 @@
          :body "{\"error\": \"API endpoint not found\"}"}
         response))))
 
-(defn not-found-handler []
+(defn not-found-handler [request]
   {:status 404
    :headers {"Content-Type" "application/json"}
    :body "{\"error\": \"API endpoint not found\"}"})
