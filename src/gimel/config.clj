@@ -1,6 +1,7 @@
 (ns gimel.config
   (:require [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+            [clojure.edn :as edn]
+            [gimel.config-spec :refer [check-config]]))
 
 (defonce config-data (atom {}))
 
@@ -32,8 +33,8 @@
   [config]
   (let [config-path (expand-home config)]
     (if-not (.exists (io/as-file config-path))
-      (reset! config-data (read-edn (io/resource "config/gimel.edn")))
-      (reset! config-data (read-edn (io/file config-path))))))
+      (reset! config-data (check-config (read-edn (io/resource "config/gimel.edn"))))
+      (reset! config-data (check-config (read-edn (io/file config-path)))))))
 
 (defn get-config
   "Returns the configuration data."

@@ -18,7 +18,7 @@ Static site generator in Clojure, with /some/ potential to become a CMS. It will
    git clone https://github.com/timotheosh/gimel.git
    #+END_SRC
 2. Change settings in ~gimel/resources/config/gimel.edn~ to fit your usage.
-   You can just copy it to ~~/.config/gimel/gimel.edn~ and then make changes to it. Gimel willl look for the settings file there before defaulting to the one under resources. You can also just copy it anywhere and run with ~lein run --config <path to configfile>~ or use the same parameters with the uberjar, if you so choose to compile before using it.
+   You can just copy it to ~~/.config/gimel/gimel.edn~ and then make changes to it. Gimel will look for the settings file there before defaulting to the one under resources. You can also just copy it anywhere and run with ~lein run --config <path to configfile>~ or use the same parameters with the uberjar, if you so choose to compile before using it.
 3. Run ~lein run~
 
 ** Future
