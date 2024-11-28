@@ -1,6 +1,6 @@
 {:configuration
  {:public
-  {:sitemap-path "resources/src"
+  {:sitemap-source "resources/src"
    :source-dir "resources/html"
    :webroot "resources/public"
    :template "resources/templates/html5-page-layout"
