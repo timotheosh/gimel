@@ -3,16 +3,17 @@
             [clojure.string :as string]
             [tick.core :as tick]
             [sitemap.core :refer [generate-sitemap]]
-            [gimel.config :refer [get-source-dir get-web-url]]
+            [gimel.config :refer [get-sitemap-source get-web-url]]
             [gimel.os :refer [path-append]]))
 
 
 (defn path->url [io-file]
   (-> (.getAbsolutePath io-file)
-      (string/replace (re-pattern (get-source-dir)) "")
+      (string/replace (re-pattern (get-sitemap-source)) "")
       (string/replace #"\.md$" ".html")
       (string/replace #"\.org$" ".html")
-      ((fn [x] (path-append (get-web-url) x)))))
+      ((fn [x] (path-append (get-web-url) x)))
+      (string/replace #"^https:/" "https://")))
 
 (defn file-data
   "Returns relevant file data for generating a sitemap."
