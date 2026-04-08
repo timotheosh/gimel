@@ -7,7 +7,5 @@
 (deftest highlight-code-blocks-test
   (testing "highlight-code-blocks function"
     (let [html-input (html [:html [:body [:pre [:code {:class "clojure"} "(+ 1 1)"]]]])
-          nodes (enlive/html-resource (java.io.StringReader. html-input))
-          transformed-nodes (highlight/highlight-code-blocks nodes)
-          result-html (apply str (enlive/emit* transformed-nodes))]
+          result-html (highlight/highlight-code-blocks html-input)]
       (is (clojure.string/includes? result-html "class=\"language-clojure line-numbers\"")))))
