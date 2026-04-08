@@ -25,3 +25,6 @@ pom.xml.asc
 .clj-kondo/
 
 *.db
+
+# Aider
+.aider*
