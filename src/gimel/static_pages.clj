@@ -17,7 +17,7 @@
   "Gets a pre-exisitng navigation bar in an html file, and returns it as a string."
   [source]
   (let [file (io/file (os/path-append source "navbar.html"))]
-    (if (.exists file)
+    (when (.exists file)
       (slurp file))))
 
 (defn get-raw-pages [source]

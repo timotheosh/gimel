@@ -1,6 +1,5 @@
 (ns gimel.database
-  (:require [clojure.spec.alpha :as s]
-            [clojure.string :as string]
+  (:require [clojure.string :as string]
             [clojure.java.io :as io]
             [next.jdbc :as jdbc]
             [mount.core :refer [defstate]]
@@ -22,8 +21,6 @@
     true
     (throw (ex-info "Invalid table/column name!" {:message data}))))
 
-(s/def :database/table-or-column-name match-valid-table-or-column-name?)
-
 (defn create-database
   "Creates the table for pages table."
   []
@@ -38,7 +35,7 @@
 (defn create-table
   "Creates a new table for a metadata type."
   [table]
-  (s/valid? :database/table-or-column-name table)
+  (match-valid-table-or-column-name? table)
   (jdbc/execute! datasource [(format "CREATE TABLE IF NOT EXISTS %s (
                       id INTEGER PRIMARY KEY,
                       name VARCHAR(64) NOT NULL,
@@ -70,7 +67,7 @@
         (:pages/id result)))))
 
 (defn get-id-table [table name]
-  (s/valid? :database/table-or-column-name table)
+  (match-valid-table-or-column-name? table)
   (let [result (jdbc/execute-one! datasource
                                   [(format "SELECT id FROM %s WHERE name = ?" table) name])]
     ((keyword (str table "/id")) result)))
@@ -78,7 +75,7 @@
 (defn get-metadata-id
   "Returns the id for the metadata after query or insert."
   [table name]
-  (s/valid? :database/table-or-column-name table)
+  (match-valid-table-or-column-name? table)
   (let [id (get-id-table table name)]
     (if id
       id
@@ -87,7 +84,7 @@
         ((keyword (str table "/id")) result)))))
 
 (defn create-meta-link [table page-id meta-id]
-  (s/valid? :database/table-or-column-name table)
+  (match-valid-table-or-column-name? table)
   (let [link (jdbc/execute-one! datasource [(format "SELECT * FROM %s_lnk WHERE page = ? AND  %s = ?" table table)
                                             page-id meta-id])]
     (when-not link
@@ -95,7 +92,7 @@
                                      page-id meta-id]))))
 
 (defn insert-metadata [pid key val]
-  (s/valid? :database/table-or-column-name key)
+  (match-valid-table-or-column-name? key)
   (create-table key)
   (let [mid (get-metadata-id key val)]
     (create-meta-link key pid mid)))

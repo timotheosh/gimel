@@ -11,7 +11,7 @@
   [data]
   (try
     (into {} (cm/parse-yaml data))
-    (catch org.yaml.snakeyaml.scanner.ScannerException exc
+    (catch org.yaml.snakeyaml.scanner.ScannerException _
       {:title "NO META DATA" :error "NO META DATA"})))
 
 (defn partial-page-layout
@@ -29,19 +29,20 @@
   ([pages] (partial-pages pages {}))
   ([pages navbar]
    (into {}
-         (for [[key value] pages]
-           (when (not (= key "/navbar.html"))
-             (let [page-name key
-                   strings (remove empty? (string/split value #"---" 3))
-                   frontmatter (parse-header (first strings))
-                   body (if (:error frontmatter)
-                          (do
-                            (log/warn (str "Page: " page-name " has no meta data!"))
-                            (str "<h1 style=\"color: red;\">NO META DATA</h1>\n" value))
-                          (second strings))]
-               (db/insert-data page-name frontmatter body)
-               {page-name #(partial-page-layout {:page page-name
-                                                 :metadata frontmatter
-                                                 :title (:title frontmatter)
-                                                 :html body
-                                                 :navbar navbar})}))))))
+         (keep identity
+               (for [[key value] pages]
+                 (when-not (= key "/navbar.html")
+                   (let [page-name key
+                         strings (remove empty? (string/split value #"---" 3))
+                         frontmatter (parse-header (first strings))
+                         body (if (:error frontmatter)
+                                (do
+                                  (log/warn (str "Page: " page-name " has no meta data!"))
+                                  (str "<h1 style=\"color: red;\">NO META DATA</h1>\n" value))
+                                (second strings))]
+                     (db/insert-data page-name frontmatter body)
+                     {page-name #(partial-page-layout {:page page-name
+                                                       :metadata frontmatter
+                                                       :title (:title frontmatter)
+                                                       :html body
+                                                       :navbar navbar})})))))))

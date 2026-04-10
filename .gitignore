@@ -12,6 +12,9 @@
 # JetBrains
 .idea/
 
+# Vscode
+.vscode/
+
 /target
 /classes
 /checkouts

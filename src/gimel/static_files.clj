@@ -1,7 +1,7 @@
 (ns gimel.static-files
   (:require [clojure.java.io :as io]
             [clojure.string :as string]
-            [gimel.os :refer [path-append dirname]])
+            [gimel.os :refer [path-append]])
   (:import [java.security MessageDigest]))
 
 (defn checksum [file-path]
@@ -30,6 +30,5 @@
             target-file-path (path-append target-root-dir relative-path)]
         (ensure-path target-file-path)
         (when (or (not (.exists (io/file target-file-path)))
-                  (and (.exists (io/file target-file-path))
-                       (not= (checksum file) (checksum target-file-path)))))
-        (io/copy file (io/file target-file-path))))))
+                  (not= (checksum file) (checksum target-file-path)))
+          (io/copy file (io/file target-file-path)))))))

@@ -1,22 +1,21 @@
 (ns gimel.api.core
   (:require [clojure.spec.alpha :as s]
             [clojure.java.io :as io]
+            [clojure.string :as str]
             [clojure.data.json :as json]
             [reitit.ring :as ring]
             [liberator.core :refer [defresource]]
             [gimel.static-pages :refer [export]]))
 
-(s/def :gimel/check-directory-path #(.isDirectory (io/file %)))
+(s/def :gimel/check-directory-path #(and (string? %) (not (str/blank? %)) (.isDirectory (io/file %))))
 
 (defn valid-data? [context]
   (let [data (:request context)
         source (s/valid? :gimel/check-directory-path (:source data))
         public (s/valid? :gimel/check-directory-path (:public data))
         org-path (if (:org-path data) (s/valid? :gimel/check-directory-path (:org-path data)) "")]
-    (if (and source public org-path)
-      (assoc context :export-data data)
-      {:status 400
-       :body (json/write-str {:error "Invalid input data"})})))
+    (when (and source public org-path)
+      (assoc context :export-data data))))
 
 (defn export-site [data]
   (export (:source data) (:public data) (:sitemap-source data))
@@ -25,7 +24,7 @@
 (defresource export-site-config
   :allowed-methods [:get]
   :available-media-types ["text/plain"]
-  :handle-ok (fn [context]
+  :handle-ok (fn [_]
                (export)
                {:status 200 :body "ok"}))
 
@@ -41,13 +40,12 @@
   (fn [request]
     (let [response (handler request)]
       (if (= 404 (:status response))
-        ;; Return your custom 404 response for API routes
         {:status 404
          :headers {"Content-Type" "application/json"}
          :body "{\"error\": \"API endpoint not found\"}"}
         response))))
 
-(defn not-found-handler [request]
+(defn not-found-handler [_]
   {:status 404
    :headers {"Content-Type" "application/json"}
    :body "{\"error\": \"API endpoint not found\"}"})
@@ -58,14 +56,3 @@
         router (ring/router api-routes {:data {:middleware [wrap-api-404]}})
         default-handler (ring/create-default-handler {:not-found not-found-handler})]
     (ring/ring-handler router default-handler)))
-
-(def not-found-route
-  ["/not-found"
-   (fn [_] {:status 404 :body "Not Found"})])
-
-(defn create-handler []
-  (ring/ring-handler
-   (ring/router
-    [["/api/export" export-site-config]
-     ["/api/export-custom" export-site-custom]
-     not-found-route])))

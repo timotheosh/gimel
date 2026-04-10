@@ -1,6 +1,4 @@
-(ns gimel.handler
-  (:require [ring.middleware.file :refer [wrap-file]]
-            [gimel.config :refer [get-webroot]]))
+(ns gimel.handler)
 
 (defn wrap-html-content-type [handler]
   (fn [request]

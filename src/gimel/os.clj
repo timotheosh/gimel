@@ -2,12 +2,14 @@
   (:require [clojure.string :as string]))
 
 (defn path-append [& paths]
-  (-> paths
-      (#(clojure.string/join "/" %))
-      (clojure.string/replace ,  #"[\\/]+" "/")))
+  (let [filtered (remove #(or (nil? %) (empty? %)) paths)
+        joined   (string/join "/" filtered)]
+    (string/replace joined #"[\\/]+" "/")))
 
 (defn dirname [path]
-  (subs path 0 (string/last-index-of path "/")))
+  (let [idx (string/last-index-of path "/")]
+    (if (nil? idx) "." (subs path 0 idx))))
 
 (defn basename [path]
-  (subs path (inc (string/last-index-of path "/"))))
+  (let [idx (string/last-index-of path "/")]
+    (if (nil? idx) path (subs path (inc idx)))))

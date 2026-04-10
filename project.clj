@@ -21,7 +21,9 @@
                  [org.xerial/sqlite-jdbc "3.46.0.0" :exclusions [org.slf4j/slf4j-api]]
                  [org.clojure/tools.cli "1.1.230"]
                  [org.clojure/tools.logging "1.3.0"]
-                 [ch.qos.logback/logback-classic "1.5.6"]]
+                 [ch.qos.logback/logback-classic "1.5.6"]
+                 [org.clojure/test.check "1.1.1"]
+                 [ring/ring-mock "0.4.0"]]
   :main ^:skip-aot gimel.core
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :target-path "target/%s"
