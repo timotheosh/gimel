@@ -4,55 +4,42 @@
             [clojure.string :as str]
             [clojure.data.json :as json]
             [reitit.ring :as ring]
-            [liberator.core :refer [defresource]]
             [gimel.static-pages :refer [export]]))
 
-(s/def :gimel/check-directory-path #(and (string? %) (not (str/blank? %)) (.isDirectory (io/file %))))
+(s/def :gimel/check-directory-path
+  #(and (string? %) (not (str/blank? %)) (.isDirectory (io/file %))))
 
-(defn valid-data? [context]
-  (let [data (:request context)
-        source (s/valid? :gimel/check-directory-path (:source data))
-        public (s/valid? :gimel/check-directory-path (:public data))
-        org-path (if (:org-path data) (s/valid? :gimel/check-directory-path (:org-path data)) "")]
-    (when (and source public org-path)
-      (assoc context :export-data data))))
+(defn valid-data? [data]
+  (and (s/valid? :gimel/check-directory-path (:source data))
+       (s/valid? :gimel/check-directory-path (:public data))
+       (or (nil? (:org-path data))
+           (s/valid? :gimel/check-directory-path (:org-path data)))))
 
-(defn export-site [data]
-  (export (:source data) (:public data) (:sitemap-source data))
-  {:status 200 :body (json/write-str {:status "ok"})})
+(defn json-response [status body]
+  {:status  status
+   :headers {"Content-Type" "application/json"}
+   :body    (json/write-str body)})
 
-(defresource export-site-config
-  :allowed-methods [:get]
-  :available-media-types ["text/plain"]
-  :handle-ok (fn [_]
-               (export)
-               {:status 200 :body "ok"}))
+(defn handle-export [_request]
+  (export)
+  {:status 200
+   :headers {"Content-Type" "text/plain"}
+   :body "ok"})
 
-(defresource export-site-custom
-  :allowed-methods [:post]
-  :available-media-types ["application/json"]
-  :malformed? (complement valid-data?)
-  :post! (fn [context]
-           (let [data (:export-data context)]
-             (export-site data))))
-
-(defn wrap-api-404 [handler]
-  (fn [request]
-    (let [response (handler request)]
-      (if (= 404 (:status response))
-        {:status 404
-         :headers {"Content-Type" "application/json"}
-         :body "{\"error\": \"API endpoint not found\"}"}
-        response))))
+(defn handle-export-custom [request]
+  (let [body (try (json/read-str (slurp (:body request)) :key-fn keyword)
+                  (catch Exception _ nil))]
+    (if (and body (valid-data? body))
+      (do (export (:source body) (:public body) (:sitemap-source body))
+          (json-response 200 {:status "ok"}))
+      (json-response 400 {:error "Invalid input data"}))))
 
 (defn not-found-handler [_]
-  {:status 404
-   :headers {"Content-Type" "application/json"}
-   :body "{\"error\": \"API endpoint not found\"}"})
+  (json-response 404 {:error "API endpoint not found"}))
 
 (defn create-api-handler []
-  (let [api-routes [["/api/export" export-site-config]
-                    ["/api/export-custom" export-site-custom]]
-        router (ring/router api-routes {:data {:middleware [wrap-api-404]}})
-        default-handler (ring/create-default-handler {:not-found not-found-handler})]
-    (ring/ring-handler router default-handler)))
+  (ring/ring-handler
+   (ring/router
+    [["/api/export"        {:get handle-export}]
+     ["/api/export-custom" {:post handle-export-custom}]])
+   (ring/create-default-handler {:not-found not-found-handler})))

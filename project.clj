@@ -5,9 +5,10 @@
             :url "https://www.opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.12.4"]
                  [ring/ring-jetty-adapter "1.15.3" :exclusions [org.slf4j/slf4j-api]]
+                 [org.clojure/data.json "2.5.2"]
+                 [ring/ring-codec "1.3.0"]
                  [ring/ring-defaults "0.7.0"]
                  [metosin/reitit-ring "0.10.1"]
-                 [liberator "0.15.3"]
                  [hiccup "2.0.0"]
                  [markdown-clj "1.12.7"]
                  [com.kiranshila/cybermonday "0.6.215" :exclusions [org.jsoup/jsoup]]
