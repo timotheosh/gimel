@@ -1,0 +1,690 @@
+#+TITLE: Gimel User Guide
+#+AUTHOR: Gimel Contributors
+#+OPTIONS: toc:2 num:nil
+
+* Gimel User Guide
+
+Gimel is a flat-file CMS and static site generator written in Clojure. It is built around an Emacs org-mode authoring workflow: you write content in =.org= files, the =gimel.el= Emacs package converts those files to HTML snippets, and the Gimel_Server assembles and exports a complete static site. This guide covers the full workflow from installation through daily authoring.
+
+** Overview & Workflow
+
+Gimel has two distinct components that work together:
+
+- *Gimel_El* — the Emacs Lisp package (=gimel.el=) that runs inside Emacs. It converts org-mode files to HTML snippets with YAML frontmatter and triggers exports by calling the Gimel_Server HTTP API. All per-project configuration lives in a =.dir-locals.el= file that Gimel_El reads automatically.
+
+- *Gimel_Server* — the running instance of the Gimel Clojure application (started via =lein run= or an uberjar). It reads HTML snippets from a configured source directory, applies an HTML template, writes the rendered site to a webroot directory, and exposes an HTTP API that Gimel_El calls to trigger each export.
+
+*** End-to-End Workflow
+
+The following sequence describes what happens from the moment you save an org-mode file to the moment a rendered HTML page appears in the webroot:
+
+1. *Author edits Org_File* — You write or update a =.org= file in the Sitemap_Source directory (configured as =gimel-source-path= in =.dir-locals.el= and =:sitemap-source= in =gimel.edn=).
+
+2. *Gimel_El splits the Org_File* — On save, Gimel_El divides the file at the first org heading (the first line matching =^\*+ =) into two parts:
+   - *Metadata_Section* — everything before the first heading; =#+KEYWORD= lines here become YAML frontmatter.
+   - *Body_Section* — everything from the first heading onward; this becomes the HTML body.
+
+3. *Gimel_El produces an HTML_Snippet* — The Body_Section is exported to an HTML fragment via =org-export-as 'html=. The Metadata_Section is converted to a =---= delimited YAML frontmatter block and prepended to the fragment. The resulting =.html= file is written to Source_Dir (=gimel-target-path= / =:source-dir=).
+
+4. *Gimel_El pings Gimel_Server* — Gimel_El sends a =GET /api/export= request to Gimel_Server.
+
+5. *Gimel_Server renders the site* — Gimel_Server reads all HTML_Snippets from Source_Dir, parses their frontmatter, applies the configured Template to each page, fingerprints CSS and JS assets, and writes the fully rendered site to Webroot (=:webroot=).
+
+#+BEGIN_EXAMPLE
+Org_File (Sitemap_Source)
+    │
+    │  Gimel_El: split on first heading
+    ▼
+Metadata_Section ──► YAML Frontmatter ─┐
+Body_Section     ──► HTML Fragment    ─┴──► HTML_Snippet (Source_Dir)
+                                                │
+                                                │  Gimel_El: GET /api/export
+                                                ▼
+                                         Gimel_Server
+                                                │
+                                                │  apply Template, fingerprint assets
+                                                ▼
+                                         Webroot (rendered site)
+#+END_EXAMPLE
+
+* Gimel_El Installation
+
+=gimel.el= is the Emacs Lisp package that drives the authoring side of the gimel workflow. It requires Emacs 25.1 or later and the [[https://github.com/bbatsov/projectile][Projectile]] package (2.7.0 or later). The package is not yet published to MELPA or any other package archive, so installation is done by pointing your package manager at the Git repository or by loading the file directly.
+
+The canonical source is: =https://github.com/thawes/gimel=
+
+** Manual installation (=load-file= / =require=)
+
+If you manage your Emacs configuration by hand, clone the repository and load =gimel.el= directly.
+
+1. Clone the repository to a local directory:
+
+   #+BEGIN_SRC sh
+   git clone https://github.com/thawes/gimel.git ~/emacs/gimel
+   #+END_SRC
+
+2. Add the directory to your =load-path= and require the package in your Emacs init file (=~/.emacs= or =~/.emacs.d/init.el=):
+
+   #+BEGIN_SRC emacs-lisp
+   (add-to-list 'load-path "~/emacs/gimel/resources/emacs")
+   (require 'gimel)
+   #+END_SRC
+
+   Alternatively, load the file directly without modifying =load-path=:
+
+   #+BEGIN_SRC emacs-lisp
+   (load-file "~/emacs/gimel/resources/emacs/gimel.el")
+   #+END_SRC
+
+3. Make sure Projectile is installed and loaded before =gimel.el= is loaded, as it is a hard dependency.
+
+** Doom Emacs
+
+In Doom Emacs, packages are declared in =~/.doom.d/packages.el= and configured in =~/.doom.d/config.el=.
+
+1. Add the following to =~/.doom.d/packages.el=:
+
+   #+BEGIN_SRC emacs-lisp
+   (package! gimel
+     :recipe (:host github :repo "thawes/gimel"
+              :files ("resources/emacs/gimel.el")))
+   #+END_SRC
+
+2. Add the following to =~/.doom.d/config.el= to load the package:
+
+   #+BEGIN_SRC emacs-lisp
+   (use-package! gimel)
+   #+END_SRC
+
+3. Run =doom sync= in your terminal to install the package:
+
+   #+BEGIN_SRC sh
+   doom sync
+   #+END_SRC
+
+** =straight.el=
+
+[[https://github.com/radian-software/straight.el][straight.el]] installs packages directly from their source repositories.
+
+Add the following to your Emacs init file:
+
+#+BEGIN_SRC emacs-lisp
+(straight-use-package
+ '(gimel :host github :repo "thawes/gimel"
+         :files ("resources/emacs/gimel.el")))
+#+END_SRC
+
+=straight.el= will clone the repository and make =gimel= available. If you use =use-package= alongside =straight.el=, you can combine the declaration:
+
+#+BEGIN_SRC emacs-lisp
+(use-package gimel
+  :straight (:host github :repo "thawes/gimel"
+             :files ("resources/emacs/gimel.el")))
+#+END_SRC
+
+** =el-get=
+
+[[https://github.com/dimitri/el-get][el-get]] can install packages from a wide variety of sources, including GitHub.
+
+Add the following to your Emacs init file:
+
+#+BEGIN_SRC emacs-lisp
+(el-get-bundle gimel
+  :url "https://github.com/thawes/gimel.git"
+  :load-path "resources/emacs"
+  :features gimel)
+#+END_SRC
+
+Then call =M-x el-get-install RET gimel RET= the first time, or let =el-get-bundle= handle installation automatically on the next Emacs startup.
+
+** =quelpa=
+
+[[https://github.com/quelpa/quelpa][quelpa]] builds and installs packages from source recipes.
+
+Add the following to your Emacs init file:
+
+#+BEGIN_SRC emacs-lisp
+(quelpa '(gimel :fetcher github :repo "thawes/gimel"
+                :files ("resources/emacs/gimel.el")))
+#+END_SRC
+
+If you use =quelpa-use-package=, you can write:
+
+#+BEGIN_SRC emacs-lisp
+(use-package gimel
+  :quelpa (gimel :fetcher github :repo "thawes/gimel"
+                 :files ("resources/emacs/gimel.el")))
+#+END_SRC
+
+
+* Recommended Project Structure
+
+The following directory layout is a recommended starting point. It is not required — you can use any directory names and locations you like, as long as your =gimel.edn= and =.dir-locals.el= reference them correctly.
+
+#+BEGIN_EXAMPLE
+<root>/
+├── .dir-locals.el
+├── org/          # Org-file sources (Sitemap_Source)
+├── html/         # HTML snippets generated by Gimel_El (Source_Dir)
+└── public/       # Website HTML generated by Gimel_Server (Webroot)
+#+END_EXAMPLE
+
+- =org/= maps to =:sitemap-source= in =gimel.edn= and =gimel-source-path= in =.dir-locals.el=.
+- =html/= maps to =:source-dir= in =gimel.edn= and =gimel-target-path= in =.dir-locals.el=.
+- =public/= maps to =:webroot= in =gimel.edn=.
+
+This structure keeps sources, intermediate artefacts, and the rendered site clearly separated, but any equivalent arrangement works equally well.
+
+
+* Config File Reference
+
+Gimel_Server is configured through an EDN file. This section documents the file format, its default location, and how to supply an alternative path.
+
+** Format and Location
+
+The Config_File is an [[https://github.com/edn-format/edn][EDN]] file. By default, Gimel_Server looks for it at:
+
+#+BEGIN_EXAMPLE
+~/.config/gimel/gimel.edn
+#+END_EXAMPLE
+
+You can override this by passing the =-c= / =--config= flag when starting the server:
+
+#+BEGIN_SRC sh
+lein run -- --config /path/to/your/gimel.edn
+#+END_SRC
+
+or with the short form:
+
+#+BEGIN_SRC sh
+lein run -- -c /path/to/your/gimel.edn
+#+END_SRC
+
+A ready-to-edit example Config_File is included in the repository at =resources/config/gimel.edn=. Copy it to your preferred location and adjust the paths and values for your environment.
+
+
+** Configuration Fields
+
+The table below describes every field in =gimel.edn=. All fields are required unless noted otherwise.
+
+*** =:configuration :public=
+
+| Field             | Type    | Description                                                                                                   |
+|-------------------+---------+---------------------------------------------------------------------------------------------------------------|
+| =:sitemap-source= | string  | Absolute path to the directory containing your =.org= source files (Sitemap_Source). Must match =gimel-source-path= in =.dir-locals.el=. |
+| =:source-dir=     | string  | Absolute path to the directory where Gimel_El writes HTML snippets (Source_Dir). Must match =gimel-target-path= in =.dir-locals.el=. |
+| =:webroot=        | string  | Absolute path to the directory where Gimel_Server writes the rendered static site (Webroot).                  |
+| =:template=       | string  | Path (relative to the working directory) to the template directory containing =index.html= and =template.edn=. |
+| =:footer=         | string  | Footer text injected into every rendered page.                                                                |
+| =:web-url=        | string  | Canonical base URL of the site (e.g. =https://example.com=). Must begin with =http://= or =https://=.        |
+| =:port=           | integer | Port on which Gimel_Server listens. Must be a positive integer. *Must match the port in =gimel-api-endpoint= in =.dir-locals.el=.* |
+
+*** =:configuration :database=
+
+| Field     | Type   | Description                                                                                   |
+|-----------+--------+-----------------------------------------------------------------------------------------------|
+| =:dbname= | string | Filename of the SQLite database that Gimel_Server creates and populates on each export (e.g. ="gimel.db"=). |
+
+*** Port alignment
+
+The =:port= value in =gimel.edn= must match the port used in the =gimel-api-endpoint= variable in =.dir-locals.el=. For example, if =:port= is =8080=, then =gimel-api-endpoint= must be set to ="http://localhost:8080"= (or the appropriate hostname). A mismatch will cause Gimel_El to send export requests to the wrong address and the export will silently fail.
+
+*** Complete annotated example
+
+The following is a complete, valid =gimel.edn= file with representative values. Copy it to your preferred config location and replace the paths with values appropriate for your environment.
+
+#+BEGIN_SRC edn
+{:configuration
+ {:public
+  {:sitemap-source "/path_to/org_directory"
+   :source-dir     "/path_to/html_snippets_directory"
+   :webroot        "/path_to/public_dir"
+   :template       "resources/templates/html5-page-layout"
+   :footer         "Copyright Me © 2026"
+   :web-url        "https://example.com"
+   :port           8080}
+  :database
+  {:dbname "gimel.db"}}}
+#+END_SRC
+
+
+* Dir_Locals Configuration
+
+Gimel_El is configured on a per-project basis through a =.dir-locals.el= file placed in the project root. Emacs reads this file automatically whenever you open a file inside the project, so no changes to your global init file are needed.
+
+Create a file named =.dir-locals.el= in the root of your gimel project with the following content:
+
+#+BEGIN_SRC emacs-lisp
+((nil . ((gimel-auto-publish . t)
+         (gimel-api-endpoint . "http://localhost:8080")
+         (gimel-source-path  . "/same_as_the/sitemap-source/in_the/gimel_edn")
+         (gimel-target-path  . "/same_as_the/source-dir/in_the/gimel_edn")
+         (gimel-navbar-file  . "name-of-the-org-file-for-navigation-if-you-want-it.org"))))
+#+END_SRC
+
+Replace the placeholder paths with the absolute paths that match the corresponding fields in your =gimel.edn=.
+
+** Variable Reference
+
+*** =gimel-auto-publish=
+
+When set to =t=, Gimel_El automatically runs the full publish sequence (copy assets → write HTML snippet → trigger export) every time you save an org-mode buffer. Set it to =nil= to disable automatic publishing and trigger exports manually.
+
+*** =gimel-api-endpoint=
+
+The base URL of the running Gimel_Server instance. Gimel_El appends =/api/export= to this value when triggering an export. The port in this URL *must match* the =:port= value in =gimel.edn=. For example, if =gimel.edn= contains =:port 8080=, this variable must be set to ="http://localhost:8080"=. A mismatch will cause export requests to fail silently.
+
+*** =gimel-source-path=
+
+The subdirectory containing your =.org= source files (Sitemap_Source). This value is resolved relative to the Projectile project root — Gimel_El calls =(projectile-project-root)= and appends this path to obtain the absolute source directory. It must point to the same directory as =:sitemap-source= in =gimel.edn=.
+
+*** =gimel-target-path=
+
+The subdirectory where Gimel_El writes the generated HTML snippets (Source_Dir). Like =gimel-source-path=, this value is resolved relative to the Projectile project root. It must point to the same directory as =:source-dir= in =gimel.edn=.
+
+*** =gimel-navbar-file=
+
+The filename (not a full path) of the org-mode file used as the site navigation bar. This variable defaults to ="navbar.org"=. When Gimel_El processes a file whose name matches =gimel-navbar-file=, it post-processes the generated HTML: all relative =href= links are rewritten to absolute paths (prefixed with =/=) so that the navbar works correctly from any page in the site. Files with any other name are exported without this post-processing step.
+
+
+
+* Org_File Authoring and Save Workflow
+
+** Org_File Structure and Metadata Conversion
+
+*** Where to put your Org_Files
+
+Org_Files live in the directory configured as =gimel-source-path= in =.dir-locals.el=, which corresponds to =:sitemap-source= in =gimel.edn=. These two values must point to the same directory. Using the recommended project structure, that directory is =org/= relative to the project root.
+
+*** How Gimel_El splits an Org_File
+
+When Gimel_El processes an Org_File it calls =gimel-split-org-content=, which scans the buffer for the first line that matches the regular expression =^\*+ = (one or more asterisks followed by a space — i.e. any org heading). Everything before that line is the *Metadata_Section*; everything from that line onward is the *Body_Section*.
+
+- *Metadata_Section* — the preamble above the first heading. =#+KEYWORD= lines here are converted to YAML frontmatter and prepended to the output HTML_Snippet.
+- *Body_Section* — the first heading and all content that follows. This is exported to an HTML fragment via =org-export-as 'html=.
+
+If the file contains no headings at all, Gimel_El raises an error and no output is written.
+
+*** Metadata conversion: =#+KEYWORD= lines to YAML frontmatter
+
+=gimel-org-metadata-to-yaml= iterates over every line in the Metadata_Section and converts lines that match =^#\+<KEY>: <VALUE>= into YAML key-value pairs. The resulting block is wrapped in =---= delimiters to form valid YAML frontmatter.
+
+Two org directives are explicitly excluded from conversion:
+
+- =#+startup= — an org display directive, not content metadata.
+- =#+options= — an org export directive, not content metadata.
+
+All other =#+KEYWORD= lines are included.
+
+**** Key downcasing
+
+Property keys are always converted to lowercase. For example:
+
+| Org_File line       | YAML frontmatter key |
+|---------------------+----------------------|
+| =#+TITLE: Foo=      | =title=              |
+| =#+AUTHOR: Bar=     | =author=             |
+| =#+DATE: 2024-01-01= | =date=              |
+
+Authors should be aware that property names are always case-normalised — =#+Title=, =#+TITLE=, and =#+title= all produce the key =title=.
+
+**** Value conversion rules
+
+Values are converted by =gimel-handle-key-value-properties= according to two rules:
+
+1. *JSON-prefixed values* — if the value string starts with =[=, ="=, or ={=, it is parsed as JSON:
+   - A JSON array (e.g. =["clojure", "emacs"]=) becomes a YAML sequence:
+     #+BEGIN_EXAMPLE
+     tags:
+       - clojure
+       - emacs
+     #+END_EXAMPLE
+   - A JSON object (e.g. ={"key": "val"}=) is stored as a single-item YAML sequence entry.
+
+2. *Plain string values* — all other values are wrapped in double quotes:
+   #+BEGIN_EXAMPLE
+   title: "My Page Title"
+   #+END_EXAMPLE
+
+*** Concrete example
+
+Given the following Org_File Metadata_Section:
+
+#+BEGIN_EXAMPLE
+#+TITLE: My First Post
+#+AUTHOR: Alice
+#+DATE: 2024-06-01
+#+TAGS: ["clojure", "emacs", "gimel"]
+#+STARTUP: showall
+#+OPTIONS: toc:nil
+#+END_EXAMPLE
+
+=gimel-org-metadata-to-yaml= produces:
+
+#+BEGIN_EXAMPLE
+---
+title: "My First Post"
+author: "Alice"
+date: "2024-06-01"
+tags:
+  - clojure
+  - emacs
+  - gimel
+---
+#+END_EXAMPLE
+
+Notes on this example:
+
+- =#+STARTUP= and =#+OPTIONS= are excluded — they do not appear in the frontmatter.
+- =#+TAGS= starts with =[= so it is parsed as a JSON array and becomes a YAML sequence.
+- =#+TITLE=, =#+AUTHOR=, and =#+DATE= are plain strings and are wrapped in double quotes.
+- All keys are lowercased regardless of how they were written in the Org_File.
+
+** Auto-Save Workflow and Batch Processing
+
+*** Auto-save on file save
+
+When =gimel-auto-publish= is non-nil and the current buffer's major mode is =org-mode=, saving the buffer automatically triggers the hook function =gimel-run-on-save=. The hook executes the following four steps in order:
+
+1. *Copy asset files* — =gimel-copy-asset-files= copies all image, CSS, and JS files from Sitemap_Source (=gimel-source-path=) to Source_Dir (=gimel-target-path=), preserving the relative directory structure.
+
+2. *Write HTML_Snippet* — =gimel-org-to-html-with-metadata= splits the current Org_File, converts the Metadata_Section to YAML frontmatter, exports the Body_Section to an HTML fragment, and writes the combined =.html= file to Source_Dir.
+
+3. *Trigger export* — =gimel-export= sends a =GET /api/export= request to Gimel_Server at the URL configured in =gimel-api-endpoint=.
+
+4. *Gimel_Server renders* — Gimel_Server receives the request, reads all HTML_Snippets from Source_Dir, applies the Template, and writes the fully rendered site to Webroot.
+
+The hook only fires when *both* conditions are true:
+
+- The current buffer's major mode is =org-mode=.
+- The variable =gimel-auto-publish= is bound and non-nil.
+
+If either condition is not met, =gimel-run-on-save= returns immediately without doing anything. This means the hook is safe to add globally — it will not interfere with non-org buffers or projects where =gimel-auto-publish= is not set.
+
+To add the hook to your Emacs configuration:
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'after-save-hook #'gimel-run-on-save)
+#+END_SRC
+
+*** Batch processing all Org_Files
+
+=gimel-batch-process-org-files= rebuilds the entire Source_Dir from scratch. It is useful when you want to regenerate all HTML_Snippets — for example after changing a shared asset or after pulling updates from version control.
+
+#+BEGIN_QUOTE
+*Warning: destructive operation.* =gimel-batch-process-org-files= begins by deleting the entire Source_Dir (=gimel-target-path=) and all of its contents before writing any new files. Any files in Source_Dir that were not generated from an Org_File in Sitemap_Source will be permanently lost. Make sure Source_Dir does not contain files you want to keep before running this function.
+#+END_QUOTE
+
+The function executes the following steps:
+
+1. *Delete Source_Dir* — calls =(delete-directory (gimel-get-target-path) t)= to recursively delete the entire target directory.
+2. *Copy asset files* — calls =gimel-copy-asset-files= to copy all image, CSS, and JS files from Sitemap_Source to the freshly created Source_Dir.
+3. *Process all Org_Files* — finds every =.org= file under Sitemap_Source recursively and calls =gimel-org-to-html-with-metadata= on each one, writing the resulting HTML_Snippet to Source_Dir.
+
+You can invoke it interactively with =M-x gimel-batch-process-org-files=, or call it from a script using Emacs batch mode:
+
+#+BEGIN_SRC sh
+emacs --batch -l /path/to/gimel.el --eval '(gimel-batch-process-org-files)'
+#+END_SRC
+
+Note that batch processing does *not* automatically trigger a =GET /api/export= request. After the batch run completes, trigger an export manually — either by calling =M-x gimel-export= inside Emacs or by saving any org-mode buffer with =gimel-auto-publish= enabled.
+
+
+* Export API Reference
+
+Gimel_Server exposes a small HTTP API that Gimel_El (and any other HTTP client) can use to trigger exports. The API is mounted under the =/api= path prefix. All error responses use a JSON body; the success response for =GET /api/export= uses plain text.
+
+The endpoint paths and response codes below are verified against =src/gimel/api/core.clj=.
+
+** =GET /api/export=
+
+Triggers a full Export using the paths configured in =gimel.edn= (Sitemap_Source, Source_Dir, Webroot, Template, etc.). No request body or query parameters are required.
+
+| Property        | Value                        |
+|-----------------+------------------------------|
+| Method          | =GET=                        |
+| Path            | =/api/export=                |
+| Request body    | None                         |
+| Success status  | =200 OK=                     |
+| Success body    | Plain text: =ok=             |
+| Content-Type    | =text/plain=                 |
+
+*** Example
+
+Request:
+
+#+BEGIN_EXAMPLE
+GET /api/export HTTP/1.1
+Host: localhost:8080
+#+END_EXAMPLE
+
+Response:
+
+#+BEGIN_EXAMPLE
+HTTP/1.1 200 OK
+Content-Type: text/plain
+
+ok
+#+END_EXAMPLE
+
+This is the endpoint that Gimel_El calls automatically on every save when =gimel-auto-publish= is enabled (see the [[*Auto-Save Workflow and Batch Processing][Auto-Save Workflow]] section). You can also call it directly from a shell:
+
+#+BEGIN_SRC sh
+curl http://localhost:8080/api/export
+#+END_SRC
+
+** =POST /api/export-custom=
+
+Triggers an Export with explicitly supplied directory paths, overriding the values in =gimel.edn=. This is useful for scripted or CI workflows where the source and output directories differ from the defaults.
+
+| Property        | Value                                  |
+|-----------------+----------------------------------------|
+| Method          | =POST=                                 |
+| Path            | =/api/export-custom=                   |
+| Request body    | JSON object (see fields below)         |
+| Content-Type    | =application/json=                     |
+| Success status  | =200 OK=                               |
+| Success body    | JSON: ={"status": "ok"}=               |
+| Error status    | =400 Bad Request=                      |
+| Error body      | JSON: ={"error": "Invalid input data"}= |
+
+*** Request body fields
+
+| Field            | Required | Type   | Description                                                                                                   |
+|------------------+----------+--------+---------------------------------------------------------------------------------------------------------------|
+| =source=         | Yes      | string | Absolute path to the Source_Dir containing HTML_Snippets. The directory must exist on the server's filesystem. |
+| =public=         | Yes      | string | Absolute path to the Webroot directory where rendered pages will be written. The directory must exist.        |
+| =sitemap-source= | No       | string | Absolute path to the Sitemap_Source directory containing =.org= files. The directory must exist if supplied.  |
+
+The server validates that each supplied path is a non-blank string that refers to an existing directory. If any required field is missing, blank, or points to a path that does not exist, the endpoint returns HTTP 400.
+
+*** Example: successful request
+
+Request:
+
+#+BEGIN_EXAMPLE
+POST /api/export-custom HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
+{
+  "source": "/home/user/project/html",
+  "public": "/home/user/project/public",
+  "sitemap-source": "/home/user/project/org"
+}
+#+END_EXAMPLE
+
+Response:
+
+#+BEGIN_EXAMPLE
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{"status":"ok"}
+#+END_EXAMPLE
+
+*** Example: invalid request (missing required field)
+
+Request:
+
+#+BEGIN_EXAMPLE
+POST /api/export-custom HTTP/1.1
+Host: localhost:8080
+Content-Type: application/json
+
+{
+  "source": "/home/user/project/html"
+}
+#+END_EXAMPLE
+
+Response:
+
+#+BEGIN_EXAMPLE
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{"error":"Invalid input data"}
+#+END_EXAMPLE
+
+The same =400= response is returned when a supplied path does not exist on the server's filesystem, when a required field is blank, or when the request body is not valid JSON.
+
+Using =curl=:
+
+#+BEGIN_SRC sh
+curl -X POST http://localhost:8080/api/export-custom \
+     -H "Content-Type: application/json" \
+     -d '{"source":"/home/user/project/html","public":"/home/user/project/public"}'
+#+END_SRC
+
+** Unrecognised paths
+
+Any request to a path that is not =/api/export= or =/api/export-custom= returns HTTP 404 with a JSON error body.
+
+| Property | Value                                      |
+|----------+--------------------------------------------|
+| Status   | =404 Not Found=                            |
+| Body     | JSON: ={"error": "API endpoint not found"}= |
+
+*** Example
+
+Request:
+
+#+BEGIN_EXAMPLE
+GET /api/unknown HTTP/1.1
+Host: localhost:8080
+#+END_EXAMPLE
+
+Response:
+
+#+BEGIN_EXAMPLE
+HTTP/1.1 404 Not Found
+Content-Type: application/json
+
+{"error":"API endpoint not found"}
+#+END_EXAMPLE
+
+This applies to all HTTP methods and all paths outside the two documented endpoints above.
+
+
+* Template System
+
+A template is a directory that Gimel_Server uses to wrap page content when rendering the static site. The =:template= field in =gimel.edn= points to this directory (relative to the working directory). Gimel_Server reads the template on every export.
+
+** Required files
+
+Every template directory must contain at least two files:
+
+- =index.html= — the base HTML layout. Gimel_Server uses [[https://github.com/cgrand/enlive][Enlive]] to parse this file as an HTML template and inject content into the elements identified by the CSS selectors in =template.edn=.
+
+- =template.edn= — an EDN file that maps content slots to CSS selectors in =index.html=. Gimel_Server reads this file to know where to inject the navbar, page body, and footer.
+
+The template directory may also contain additional asset files. CSS and JS files are fingerprinted by [[https://github.com/magnars/optimus][Optimus]] and served by Gimel_Server with cache-busting URLs. Other files (images, fonts, etc.) can be placed in the template directory and will be served as static assets.
+
+The =html5-page-layout= template bundled with the repository illustrates a typical directory layout:
+
+#+BEGIN_EXAMPLE
+resources/templates/html5-page-layout/
+├── index.html      # Base HTML layout (Enlive template)
+├── template.edn    # CSS selector mappings for content injection
+├── style.css       # Stylesheet (fingerprinted by Optimus)
+└── script.js       # JavaScript (fingerprinted by Optimus)
+#+END_EXAMPLE
+
+Note: the bundled =html5-page-layout/template.edn= uses the slot names =:header=, =:main=, and =:left-sidebar= rather than the canonical =:navbar=, =:main=, and =:footer= names described below. It is provided as a structural example only. When creating your own template, use the canonical slot names shown in the example below so that all three content areas (navbar, page body, and footer) are rendered correctly.
+
+** =template.edn= format
+
+=template.edn= is an EDN map with a single top-level key =:body=. The value of =:body= is a map whose keys are content slot names and whose values are Enlive CSS selector vectors. Gimel_Server uses three slots:
+
+| Key       | Content injected                                      |
+|-----------+-------------------------------------------------------|
+| =:navbar= | Navigation bar HTML (generated from =gimel-navbar-file=) |
+| =:main=   | Page body HTML (the HTML fragment from the HTML_Snippet) |
+| =:footer= | Footer text (the =:footer= value from =gimel.edn=)    |
+
+Each value is an Enlive selector vector. A simple element selector is written as a keyword (e.g. =:footer=). A selector with an ID is written as a keyword with a =\#= suffix (e.g. =:section#pageContent=). Nested selectors are written as a vector of vectors (e.g. =[:section#pageContent [:main]]=), which selects the inner element within the outer one.
+
+*** Example =template.edn=
+
+#+BEGIN_SRC edn
+{:body
+ {:navbar [:header [:nav]]
+  :main   [:section#pageContent [:main]]
+  :footer [:footer]}}
+#+END_SRC
+
+This example tells Gimel_Server to:
+
+- inject the navbar HTML into the =<nav>= element inside =<header>=
+- inject the page body HTML into the =<main>= element inside =<section id="pageContent">=
+- inject the footer text into the =<footer>= element
+
+The selectors must match elements that actually exist in =index.html=. If a selector does not match any element, that slot is silently skipped and the corresponding content is not rendered.
+
+** CSS and JS asset fingerprinting
+
+When Gimel_Server starts, Optimus scans the template directory for files matching =*.css= and =*.js= and generates fingerprinted URLs for them (e.g. =style.css= becomes something like =/840e447d471b/style.css=). The fingerprinted paths are substituted into the served HTML automatically. This means browsers cache assets aggressively and receive updated files immediately when the content changes, without any manual cache-busting.
+
+References to CSS and JS files in =index.html= should use the plain filenames (e.g. =href="style.css"=); Optimus rewrites them to the fingerprinted paths at serve time.
+
+
+* SQLite Database
+
+On every Export, Gimel_Server creates and populates a SQLite database. The database filename is taken from the =:dbname= field under =:configuration :database= in =gimel.edn= (for example, ="gimel.db"=). The database is deleted and recreated from scratch at the start of each Export, so it always reflects the current state of the site.
+
+** Pages table
+
+The =pages= table stores one row per rendered page.
+
+| Column    | Type           | Constraints              | Description                          |
+|-----------+----------------+--------------------------+--------------------------------------|
+| =id=      | =INTEGER=      | =PRIMARY KEY=            | Auto-assigned row identifier         |
+| =url=     | =VARCHAR(128)= | =NOT NULL=, =UNIQUE=     | URL path of the page                 |
+| =title=   | =VARCHAR(128)= | =NOT NULL=               | Value of the =title= frontmatter key |
+| =content= | =TEXT=         |                          | Full HTML body of the page           |
+
+** Metadata tables and join tables
+
+Every frontmatter field other than =title= is stored in its own dedicated table and linked to the =pages= table through a join table. For a frontmatter key named =<key>= (for example =tags= or =author=), Gimel_Server creates two tables:
+
+- *=<key>= table* — holds the distinct values for that key.
+
+  | Column | Type          | Constraints          | Description                    |
+  |--------+---------------+----------------------+--------------------------------|
+  | =id=   | =INTEGER=     | =PRIMARY KEY=        | Auto-assigned row identifier   |
+  | =name= | =VARCHAR(64)= | =NOT NULL=, =UNIQUE= | The metadata value (e.g. a tag name) |
+
+- *=<key>_lnk= join table* — links pages to their metadata values.
+
+  | Column   | Type      | Constraints                    | Description                    |
+  |----------+-----------+--------------------------------+--------------------------------|
+  | =page=   | =INTEGER= | =NOT NULL=, FK → =pages.id=    | References the page row        |
+  | =<key>=  | =INTEGER= | =NOT NULL=, FK → =<key>.id=    | References the metadata value  |
+
+For example, a page with =tags: ["clojure", "emacs"]= in its frontmatter produces rows in a =tags= table (one row per unique tag) and rows in a =tags_lnk= table linking that page to each tag.
+
+If a frontmatter value is a sequence (JSON array), each element is inserted as a separate row in the metadata table and linked individually. If the value is a plain string, a single row is inserted.
+
+** Current status and future use
+
+The SQLite database is populated during Export but is *not currently used at runtime*. No existing Gimel_Server feature reads from the database after it is written. It is reserved for future features such as dynamic menus and related-links sections.
