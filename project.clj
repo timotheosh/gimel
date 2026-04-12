@@ -26,6 +26,15 @@
                  [ch.qos.logback/logback-classic "1.5.32"]
                  [org.clojure/test.check "1.1.3"]
                  [ring/ring-mock "0.6.2"]]
+  :plugins [[lein-shell "0.5.0"]]
+  :aliases {"emacs-test" ["shell" "emacs" "--batch"
+                          "--eval" "(add-to-list 'load-path \"resources/emacs\")"
+                          "--eval" "(add-to-list 'load-path \"resources/emacs/vendor\")"
+                          "-l" "ert" "-l" "org"
+                          "-l" "resources/emacs/gimel.el"
+                          "-l" "resources/emacs/tests/gimel-test.el"
+                          "-f" "ert-run-tests-batch-and-exit"]
+            "test-all" ["do" "test," "emacs-test"]}
   :main ^:skip-aot gimel.core
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :target-path "target/%s"

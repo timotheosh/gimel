@@ -1,5 +1,5 @@
 (require 'ert)
-(load-file "../gimel.el")
+(require 'gimel)
 
 (ert-deftest test-gimel-path-append ()
   (should (string= "/foo/bar/baloo" (gimel-path-append "/foo" "bar" "baloo")))
