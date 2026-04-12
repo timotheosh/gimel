@@ -130,8 +130,8 @@
               (let ((result (gimel-load-config)))
                 (should (listp result))
                 (should (string= gimel-api-endpoint "http://localhost:9090"))
-                (should (string= gimel-source-path "/my/org"))
-                (should (string= gimel-target-path "/my/html"))))))
+                (should (string= gimel--source-path "/my/org"))
+                (should (string= gimel--target-path "/my/html"))))))
       (delete-file temp-file))))
 
 (ert-deftest test-gimel-load-config-nonexistent ()

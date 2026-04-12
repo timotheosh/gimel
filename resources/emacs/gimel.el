@@ -27,15 +27,11 @@
   (let ((joined-path (mapconcat 'identity paths "/")))
     (replace-regexp-in-string "[\\/]+" "/" joined-path)))
 
-(defcustom gimel-source-path "org"
-  "The project subdirectory where we will find org-files."
-  :type '(string)
-  :group 'paths)
+(defvar gimel--source-path nil
+  "Internal: absolute path to org source directory, set by `gimel-load-config'.")
 
-(defcustom gimel-target-path "html"
-  "The project subdirectory where gimel will look for html snippets."
-  :type '(string)
-  :group 'paths)
+(defvar gimel--target-path nil
+  "Internal: absolute path to html output directory, set by `gimel-load-config'.")
 
 (defcustom gimel-navbar-file "navbar.org"
   "The org-mode file used as a navigatio bar for the entire project's web site."
@@ -74,8 +70,8 @@ Does not modify any variable if an error occurs."
     (let* ((server-table (cdr (assoc "server" parsed)))
            (port         (cdr (assoc "port" server-table))))
       (setq gimel-api-endpoint  (format "http://localhost:%d" port))
-      (setq gimel-source-path   (cdr (assoc "sitemap-source" server-table)))
-      (setq gimel-target-path   (cdr (assoc "source-dir" server-table)))
+      (setq gimel--source-path  (cdr (assoc "sitemap-source" server-table)))
+      (setq gimel--target-path  (cdr (assoc "source-dir" server-table)))
       parsed)))
 
 (defun gimel-export ()
@@ -131,12 +127,12 @@ Does not modify any variable if an error occurs."
 
 
 (defun gimel-get-source-path ()
-  "Returns the source path."
-  (gimel-path-append (projectile-project-root) gimel-source-path))
+  "Returns the absolute source path from config."
+  gimel--source-path)
 
 (defun gimel-get-target-path ()
-  "Returns the target path."
-  (gimel-path-append (projectile-project-root) gimel-target-path))
+  "Returns the absolute target path from config."
+  gimel--target-path)
 
 (defun gimel-target-path ()
   "Determines the target path for the exported document."
