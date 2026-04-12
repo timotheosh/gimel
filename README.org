@@ -8,18 +8,133 @@ Static site generator in Clojure, with /some/ potential to become a CMS. It will
 ** Description
 ~gimel~, like most staic website generators, is an "opinionated" implementation. It fits a particular workflow. It originally watched a directory for file changes and then convert any changed files into html for a static site. I tried maintaining my websites in markdown, but becamw eutterly dissatisfied, as I had been maintaing my websites as org-mode projects. Org-mode publish became slow as the site grew, and I needed something faster. Dissatisfied with the the current state of org-mode parsers in any language, except elisp, I opted for a different path forward. So I created an Emacs package that minimally convert org-mode files into html snippets. ~gimel.el~ will properly convert links, add id's to section headers. It can be run in batch mode, but batch mode is almost as slow as org-publish. So individual files can be exported on save. File-level properties for org-mode files are saved as metadata and stored in the sqlite database.
 
-** Installation
-   :PROPERTIES:
-   :CUSTOM_ID: installation
-   :END:
+** Quickstart
+Get from zero to a publishing site in five minutes.
 
-1. Clone this repo.
-   #+BEGIN_SRC shell
-   git clone https://github.com/timotheosh/gimel.git
-   #+END_SRC
-2. Change settings in ~gimel/resources/config/gimel.edn~ to fit your usage.
-   You can just copy it to ~~/.config/gimel/gimel.edn~ and then make changes to it. Gimel will look for the settings file there before defaulting to the one under resources. You can also just copy it anywhere and run with ~lein run --config <path to configfile>~ or use the same parameters with the uberjar, if you so choose to compile before using it.
-3. Run ~lein run~
+Gimel has two moving parts: the *gimel server*, a Clojure application that renders your site, and *gimel.el*, an Emacs package that converts your org-mode files and triggers a render on every save.
+
+*** Prerequisites
+
+- Emacs 25.1 or later with [[https://github.com/bbatsov/projectile][Projectile]] 2.7.0 or later
+- Java 11 or later
+- Leiningen
+
+*** Step 1 — Clone the repository
+
+#+BEGIN_SRC sh
+git clone https://github.com/thawes/gimel.git
+cd gimel
+#+END_SRC
+
+*** Step 2 — Install gimel.el
+
+Choose whichever method matches your Emacs setup.
+
+*Doom Emacs* — add to =~/.doom.d/packages.el=, then run =doom sync=:
+
+#+BEGIN_SRC emacs-lisp
+(package! gimel
+  :recipe (:host github :repo "thawes/gimel"
+           :files ("resources/emacs/gimel.el")))
+#+END_SRC
+
+*straight.el*:
+
+#+BEGIN_SRC emacs-lisp
+(straight-use-package
+ '(gimel :host github :repo "thawes/gimel"
+         :files ("resources/emacs/gimel.el")))
+#+END_SRC
+
+*Manual* — add to your init file:
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'load-path "~/path/to/gimel/resources/emacs")
+(require 'gimel)
+#+END_SRC
+
+Also add the after-save hook so publishing happens automatically:
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'after-save-hook #'gimel-run-on-save)
+#+END_SRC
+
+*** Step 3 — Create your project
+
+#+BEGIN_SRC sh
+mkdir -p my-site/{org,html,public}
+cd my-site
+#+END_SRC
+
+*** Step 4 — Configure the gimel server
+
+Create =~/.config/gimel/my-site.toml= (or place =gimel.toml= in your project root):
+
+#+BEGIN_SRC toml
+[server]
+port           = 8080
+web-url        = "https://example.com"
+webroot        = "/path/to/my-site/public"
+org-source     = "/path/to/my-site/org"
+snippet-output = "/path/to/my-site/html"
+template       = "resources/templates/html5-page-layout"
+footer         = "My Site © 2026"
+
+[database]
+dbname = "my-site.db"
+#+END_SRC
+
+*** Step 5 — Configure gimel.el
+
+Create =.dir-locals.el= in your project root:
+
+#+BEGIN_SRC emacs-lisp
+((nil . ((gimel-config-file  . "/home/you/.config/gimel/my-site.toml")
+         (gimel-auto-publish . t))))
+#+END_SRC
+
+gimel.el reads the TOML file automatically when you open a file in the project. The port and directory paths are set from the config — you don't need to duplicate them here.
+
+*** Step 6 — Start the gimel server
+
+From the gimel repository root:
+
+#+BEGIN_SRC sh
+lein run -- -c /home/you/.config/gimel/my-site.toml
+#+END_SRC
+
+*** Step 7 — Write your first page
+
+Create =my-site/org/index.org=:
+
+#+BEGIN_EXAMPLE
+#+TITLE: My First Page
+#+AUTHOR: Your Name
+
+* Hello, Gimel
+
+This is my first page.
+
+\*\* A Section
+
+Some content here.
+#+END_EXAMPLE
+
+Open the file in Emacs. When you save it, gimel.el will:
+
+1. Convert the org file to an HTML snippet in =html/=
+2. Ping the gimel server via =GET /api/export=
+3. The server renders the full site into =public/=
+
+You should see =gimel site exported= in the minibuffer. Your rendered page is now in =public/index.html=.
+
+*** What's next?
+
+- Add a navbar by creating =org/navbar.org= — gimel.el will post-process its links to absolute paths automatically
+- Customise the template — see the [[file:guide.org::*Template System][Template System]] section of the full guide
+- Trigger a full rebuild with =M-x gimel-batch-process-org-files= after making changes that affect all pages
+
+For complete reference documentation see [[file:docs/guide.org][guide.org]].
 
 ** Future
 At some point, I may use the data generated in the database as a means for generating menus and "related links" section for the sites.
@@ -34,7 +149,7 @@ At some point, I may use the data generated in the database as a means for gener
     :CUSTOM_ID: mit-license
     :END:
 
-Copyright © 2019-2024 Tim Hawes
+Copyright © 2019-2026 Tim Hawes
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the
