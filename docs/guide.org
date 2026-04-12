@@ -51,7 +51,7 @@ Body_Section     ──► HTML Fragment    ─┴──► HTML_Snippet (Source
 
 =gimel.el= is the Emacs Lisp package that drives the authoring side of the gimel workflow. It requires Emacs 25.1 or later and the [[https://github.com/bbatsov/projectile][Projectile]] package (2.7.0 or later). The package is not yet published to MELPA or any other package archive, so installation is done by pointing your package manager at the Git repository or by loading the file directly.
 
-The canonical source is: =https://github.com/thawes/gimel=
+The canonical source is: =https://github.com/timotheosh/gimel=
 
 ** Manual installation (=load-file= / =require=)
 
@@ -60,7 +60,7 @@ If you manage your Emacs configuration by hand, clone the repository and load =g
 1. Clone the repository to a local directory:
 
    #+BEGIN_SRC sh
-   git clone https://github.com/thawes/gimel.git ~/emacs/gimel
+   git clone https://github.com/timotheosh/gimel.git ~/emacs/gimel
    #+END_SRC
 
 2. Add the directory to your =load-path= and require the package in your Emacs init file (=~/.emacs= or =~/.emacs.d/init.el=):
@@ -86,7 +86,7 @@ In Doom Emacs, packages are declared in =~/.doom.d/packages.el= and configured i
 
    #+BEGIN_SRC emacs-lisp
    (package! gimel
-     :recipe (:host github :repo "thawes/gimel"
+     :recipe (:host github :repo "timotheosh/gimel"
               :files ("resources/emacs/gimel.el")))
    #+END_SRC
 
@@ -110,7 +110,7 @@ Add the following to your Emacs init file:
 
 #+BEGIN_SRC emacs-lisp
 (straight-use-package
- '(gimel :host github :repo "thawes/gimel"
+ '(gimel :host github :repo "timotheosh/gimel"
          :files ("resources/emacs/gimel.el")))
 #+END_SRC
 
@@ -118,7 +118,7 @@ Add the following to your Emacs init file:
 
 #+BEGIN_SRC emacs-lisp
 (use-package gimel
-  :straight (:host github :repo "thawes/gimel"
+  :straight (:host github :repo "timotheosh/gimel"
              :files ("resources/emacs/gimel.el")))
 #+END_SRC
 
@@ -130,7 +130,7 @@ Add the following to your Emacs init file:
 
 #+BEGIN_SRC emacs-lisp
 (el-get-bundle gimel
-  :url "https://github.com/thawes/gimel.git"
+  :url "https://github.com/timotheosh/gimel.git"
   :load-path "resources/emacs"
   :features gimel)
 #+END_SRC
@@ -144,7 +144,7 @@ Then call =M-x el-get-install RET gimel RET= the first time, or let =el-get-bund
 Add the following to your Emacs init file:
 
 #+BEGIN_SRC emacs-lisp
-(quelpa '(gimel :fetcher github :repo "thawes/gimel"
+(quelpa '(gimel :fetcher github :repo "timotheosh/gimel"
                 :files ("resources/emacs/gimel.el")))
 #+END_SRC
 
@@ -152,7 +152,7 @@ If you use =quelpa-use-package=, you can write:
 
 #+BEGIN_SRC emacs-lisp
 (use-package gimel
-  :quelpa (gimel :fetcher github :repo "thawes/gimel"
+  :quelpa (gimel :fetcher github :repo "timotheosh/gimel"
                  :files ("resources/emacs/gimel.el")))
 #+END_SRC
 

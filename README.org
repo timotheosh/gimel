@@ -22,7 +22,7 @@ Gimel has two moving parts: the *gimel server*, a Clojure application that rende
 *** Step 1 — Clone the repository
 
 #+BEGIN_SRC sh
-git clone https://github.com/thawes/gimel.git
+git clone https://github.com/timotheosh/gimel.git
 cd gimel
 #+END_SRC
 
@@ -34,7 +34,7 @@ Choose whichever method matches your Emacs setup.
 
 #+BEGIN_SRC emacs-lisp
 (package! gimel
-  :recipe (:host github :repo "thawes/gimel"
+  :recipe (:host github :repo "timotheosh/gimel"
            :files ("resources/emacs/gimel.el")))
 #+END_SRC
 
@@ -42,7 +42,7 @@ Choose whichever method matches your Emacs setup.
 
 #+BEGIN_SRC emacs-lisp
 (straight-use-package
- '(gimel :host github :repo "thawes/gimel"
+ '(gimel :host github :repo "timotheosh/gimel"
          :files ("resources/emacs/gimel.el")))
 #+END_SRC
 
