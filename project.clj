@@ -4,6 +4,7 @@
   :license {:name "MIT License"
             :url "https://www.opensource.org/licenses/MIT"}
   :dependencies [[org.clojure/clojure "1.12.4"]
+                 [toml "0.1.4"]
                  [ring/ring-jetty-adapter "1.15.3" :exclusions [org.slf4j/slf4j-api]]
                  [org.clojure/data.json "2.5.2"]
                  [ring/ring-codec "1.3.0"]

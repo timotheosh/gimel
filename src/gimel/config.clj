@@ -1,6 +1,7 @@
 (ns gimel.config
   (:require [clojure.java.io :as io]
             [clojure.edn :as edn]
+            [toml.core :as toml]
             [gimel.config-spec :refer [check-config]]))
 
 (defonce config-data (atom {}))
@@ -28,13 +29,36 @@
     (catch RuntimeException e
       (printf "Error parsing edn file '%s': %s\n" file-data (.getMessage e)))))
 
+(defn- parse-toml
+  "Parses a TOML file and reshapes it into the config map structure
+  expected by gimel.config-spec/check-config.
+  The [emacs] table is parsed but not stored.
+  Throws ex-info with :error key on TOML syntax errors."
+  [file-path]
+  (let [raw (try
+              (toml/read (slurp file-path) :keywordize true)
+              (catch Exception e
+                (throw (ex-info (str "TOML parse error: " (.getMessage e))
+                                {:error (.getMessage e)}))))
+        server   (:server raw)
+        database (:database raw)]
+    {:configuration
+     {:public   {:port           (:port server)
+                 :web-url        (:web-url server)
+                 :webroot        (:webroot server)
+                 :source-dir     (:source-dir server)
+                 :sitemap-source (:sitemap-source server)
+                 :template       (:template server)
+                 :footer         (:footer server)}
+      :database {:dbname (:dbname database)}}}))
+
 (defn load-config
   "Loads the config data into our global atom."
   [config]
   (let [config-path (expand-home config)]
     (if-not (.exists (io/as-file config-path))
-      (reset! config-data (check-config (read-edn (io/resource "config/gimel.edn"))))
-      (reset! config-data (check-config (read-edn (io/file config-path)))))))
+      (reset! config-data (check-config (parse-toml (str (io/resource "config/gimel.toml")))))
+      (reset! config-data (check-config (parse-toml config-path))))))
 
 (defn get-config
   "Returns the configuration data."
@@ -42,6 +66,11 @@
   (if (zero? (count @config-data))
     (throw (ex-info "Config is blank!!!" {:what-happened? "who knows?"}))
     @config-data))
+
+(defn get-port
+  "Returns the server port."
+  []
+  (:port (:public (:configuration (get-config)))))
 
 (defn get-sitemap-source
   "Returns the source directory for generating the sitemap."

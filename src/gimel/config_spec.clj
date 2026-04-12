@@ -2,14 +2,14 @@
   (:require [clojure.spec.alpha :as s]))
 
 ;; Specs for individual unqualified keys
-(s/def :gimel/sitemap-source string?)
-(s/def :gimel/source-dir string?)
-(s/def :gimel/webroot string?)
-(s/def :gimel/template string?)
-(s/def :gimel/footer string?)
+(s/def :gimel/sitemap-source (s/and string? seq))
+(s/def :gimel/source-dir (s/and string? seq))
+(s/def :gimel/webroot (s/and string? seq))
+(s/def :gimel/template (s/and string? seq))
+(s/def :gimel/footer (s/and string? seq))
 (s/def :gimel/web-url #(re-matches #"(http|https)://[^\s]+" %)) ;; Simple URL validation
 (s/def :gimel/port pos-int?) ;; Positive integers for ports
-(s/def :gimel/dbname string?)
+(s/def :gimel/dbname (s/and string? seq))
 
 ;; Spec for the :public configuration
 (s/def :gimel/public
@@ -35,10 +35,22 @@
   (s/keys :req-un [:gimel/configuration]))
 
 
+(defn- first-problem-key [config-data]
+  (let [problems (::s/problems (s/explain-data :gimel/config config-data))]
+    (when (seq problems)
+      (let [{:keys [path pred]} (first problems)
+            key-name (last path)]
+        (cond
+          (and key-name (= pred 'clojure.core/contains?))
+          (str "missing required key: " key-name)
+          key-name
+          (str "invalid value for key: " key-name)
+          :else
+          (str "invalid config: " pred))))))
+
 (defn check-config [config-data]
   (if (s/valid? :gimel/config config-data)
     config-data
-    (let [error-msg (with-out-str (s/explain :gimel/config config-data))]
-      (binding [*out* *err*]
-        (println error-msg)
-        (throw (ex-info "Invalid config file" {:error error-msg}))))))
+    (let [problem    (first-problem-key config-data)
+          error-msg  (or problem (with-out-str (s/explain :gimel/config config-data)))]
+      (throw (ex-info (str "Invalid configuration — " error-msg) {:error error-msg})))))

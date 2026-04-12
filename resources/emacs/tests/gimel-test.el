@@ -110,3 +110,48 @@
                    "Nam <a href=\"/vestibulum/index.html\" accumsan nisl."))
   (should (string= (gimel-postprocess-navbar-links "Nam <a href=\"http://vestibulum/index.html\" accumsan nisl.")
                    "Nam <a href=\"http://vestibulum/index.html\" accumsan nisl.")))
+
+;; Tests for gimel-load-config
+
+(ert-deftest test-gimel-load-config-valid ()
+  "Test gimel-load-config sets variables from gimel-config-file."
+  (let ((temp-file (make-temp-file "gimel-test-" nil ".toml")))
+    (unwind-protect
+        (progn
+          (with-temp-file temp-file
+            (insert "[server]\nport = 9090\nweb-url = \"http://localhost:9090\"\nsitemap-source = \"/my/org\"\nsource-dir = \"/my/html\"\n"))
+          (cl-letf (((symbol-function 'toml:read-from-file)
+                     (lambda (_path)
+                       '(("server" . (("port" . 9090)
+                                      ("web-url" . "http://localhost:9090")
+                                      ("sitemap-source" . "/my/org")
+                                      ("source-dir" . "/my/html")))))))
+            (let ((gimel-config-file temp-file))
+              (let ((result (gimel-load-config)))
+                (should (listp result))
+                (should (string= gimel-api-endpoint "http://localhost:9090"))
+                (should (string= gimel-source-path "/my/org"))
+                (should (string= gimel-target-path "/my/html"))))))
+      (delete-file temp-file))))
+
+(ert-deftest test-gimel-load-config-nonexistent ()
+  "Test gimel-load-config signals error for non-existent file, variables unchanged."
+  (let ((original-endpoint gimel-api-endpoint)
+        (gimel-config-file "/this/path/does/not/exist/gimel.toml"))
+    (should-error (gimel-load-config))
+    (should (string= gimel-api-endpoint original-endpoint))))
+
+(ert-deftest test-gimel-load-config-invalid-toml ()
+  "Test gimel-load-config signals error for invalid TOML, variables unchanged."
+  (let ((temp-file (make-temp-file "gimel-test-invalid-" nil ".toml"))
+        (original-endpoint gimel-api-endpoint))
+    (unwind-protect
+        (progn
+          (with-temp-file temp-file
+            (insert "this is not valid toml ===\n"))
+          (cl-letf (((symbol-function 'toml:read-from-file)
+                     (lambda (_path) (error "TOML parse error"))))
+            (let ((gimel-config-file temp-file))
+              (should-error (gimel-load-config))
+              (should (string= gimel-api-endpoint original-endpoint)))))
+      (delete-file temp-file))))

@@ -1,0 +1,11 @@
+[server]
+port           = 8080
+web-url        = "https://naurrnen.selfdidactic.com"
+webroot        = "resources/public"
+source-dir     = "resources/html"
+sitemap-source = "resources/src"
+template       = "resources/templates/html5-page-layout"
+footer         = "Powered by Gimel"
+
+[database]
+dbname = "gimel.db"

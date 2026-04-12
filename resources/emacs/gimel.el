@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: abbrev bib c calendar comm convenience data docs emulations extensions faces files frames games hardware help hypermedia i18n internal languages lisp local maint mail matching mouse multimedia news outlines processes terminals tex tools unix vc wp
 ;; Homepage: https://github.com/thawes/gimel
-;; Package-Requires: ((emacs "25.1") (projectile "2.7.0"))
+;; Package-Requires: ((emacs "25.1") (projectile "2.7.0") (toml "1.1.0.0"))
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -20,6 +20,7 @@
 ;;; Code:
 
 (require 'url)
+(require 'toml)
 
 (defun gimel-path-append (&rest paths)
   "Join multiple PATHS into a single path with forward slashes."
@@ -46,10 +47,36 @@
   :type '(string)
   :group 'paths)
 
-(defcustom gimel-api-endpoint "http://localhost:8880"
+(defcustom gimel-api-endpoint "http://localhost:8080"
   "The endpoint for gimel API."
   :type '(string)
   :group 'paths)
+
+(defcustom gimel-config-file
+  (expand-file-name "~/.config/gimel/gimel.toml")
+  "Path to the gimel TOML configuration file."
+  :type 'file
+  :group 'gimel)
+(put 'gimel-config-file 'safe-local-variable #'stringp)
+
+(defun gimel-load-config ()
+  "Load `gimel-config-file' and populate defcustom variables from it.
+Signals an error if the file does not exist or contains invalid TOML.
+Does not modify any variable if an error occurs."
+  (unless (file-exists-p gimel-config-file)
+    (error "gimel-load-config: file not found: %s" gimel-config-file))
+  (let ((parsed
+         (condition-case err
+             (toml:read-from-file gimel-config-file)
+           (error
+            (error "gimel-load-config: TOML parse error in %s: %s"
+                   gimel-config-file (error-message-string err))))))
+    (let* ((server-table (cdr (assoc "server" parsed)))
+           (port         (cdr (assoc "port" server-table))))
+      (setq gimel-api-endpoint  (format "http://localhost:%d" port))
+      (setq gimel-source-path   (cdr (assoc "sitemap-source" server-table)))
+      (setq gimel-target-path   (cdr (assoc "source-dir" server-table)))
+      parsed)))
 
 (defun gimel-export ()
   (url-retrieve (concat gimel-api-endpoint "/api/export")
@@ -231,6 +258,11 @@
       (gimel-copy-asset-files)
       (gimel-org-to-html-with-metadata)
       (gimel-export))))
+
+(add-hook 'hack-local-variables-hook
+          (lambda ()
+            (when (file-exists-p gimel-config-file)
+              (gimel-load-config))))
 
 (provide 'gimel)
 ;;; gimel.el ends here
