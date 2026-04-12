@@ -3,7 +3,7 @@
             [optimus.export]
             [optimus.optimizations :as optimizations]
             [stasis.core :as stasis]
-            [gimel.config :refer [get-config get-source-dir get-webroot get-sitemap-source]]
+            [gimel.config :refer [get-config get-snippet-output get-webroot get-org-source]]
             [gimel.os :as os]
             [gimel.templates :as tmpl]
             [gimel.highlight :as highlight]
@@ -39,8 +39,8 @@
 
 (defn export
   "Wipes public directory and recreates website from source to public."
-  ([] (export (get-source-dir) (get-webroot) (get-sitemap-source)))
-  ([source public] (export source public (get-sitemap-source)))
+  ([] (export (get-snippet-output) (get-webroot) (get-org-source)))
+  ([source public] (export source public (get-org-source)))
   ([source public sitemap]
    (println (str "Using config data: " (get-config)))
    (create-database)

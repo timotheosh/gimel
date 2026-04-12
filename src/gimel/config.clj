@@ -46,8 +46,8 @@
      {:public   {:port           (:port server)
                  :web-url        (:web-url server)
                  :webroot        (:webroot server)
-                 :source-dir     (:source-dir server)
-                 :sitemap-source (:sitemap-source server)
+                 :snippet-output     (:snippet-output server)
+                 :org-source (:org-source server)
                  :template       (:template server)
                  :footer         (:footer server)}
       :database {:dbname (:dbname database)}}}))
@@ -72,15 +72,15 @@
   []
   (:port (:public (:configuration (get-config)))))
 
-(defn get-sitemap-source
+(defn get-org-source
   "Returns the source directory for generating the sitemap."
   []
-  (:sitemap-source (:public (:configuration (get-config)))))
+  (:org-source (:public (:configuration (get-config)))))
 
-(defn get-source-dir
+(defn get-snippet-output
   "Returns the source directory."
   []
-  (:source-dir (:public (:configuration (get-config)))))
+  (:snippet-output (:public (:configuration (get-config)))))
 
 (defn get-webroot
   "Returns the webroot."

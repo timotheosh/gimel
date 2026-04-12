@@ -2,8 +2,8 @@
   (:require [clojure.spec.alpha :as s]))
 
 ;; Specs for individual unqualified keys
-(s/def :gimel/sitemap-source (s/and string? seq))
-(s/def :gimel/source-dir (s/and string? seq))
+(s/def :gimel/org-source (s/and string? seq))
+(s/def :gimel/snippet-output (s/and string? seq))
 (s/def :gimel/webroot (s/and string? seq))
 (s/def :gimel/template (s/and string? seq))
 (s/def :gimel/footer (s/and string? seq))
@@ -13,8 +13,8 @@
 
 ;; Spec for the :public configuration
 (s/def :gimel/public
-  (s/keys :req-un [:gimel/sitemap-source
-                   :gimel/source-dir
+  (s/keys :req-un [:gimel/org-source
+                   :gimel/snippet-output
                    :gimel/webroot
                    :gimel/template
                    :gimel/footer

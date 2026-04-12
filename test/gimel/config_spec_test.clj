@@ -4,8 +4,8 @@
 
 (def valid-config
   {:configuration
-   {:public {:sitemap-source "/tmp/src"
-             :source-dir     "/tmp/src"
+   {:public {:org-source "/tmp/src"
+             :snippet-output     "/tmp/src"
              :webroot        "/tmp/public"
              :template       "resources/templates/naurrnen-layout"
              :footer         "Footer text"

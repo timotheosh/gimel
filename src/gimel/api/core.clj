@@ -30,7 +30,7 @@
   (let [body (try (json/read-str (slurp (:body request)) :key-fn keyword)
                   (catch Exception _ nil))]
     (if (and body (valid-data? body))
-      (do (export (:source body) (:public body) (:sitemap-source body))
+      (do (export (:source body) (:public body) (:org-source body))
           (json-response 200 {:status "ok"}))
       (json-response 400 {:error "Invalid input data"}))))
 

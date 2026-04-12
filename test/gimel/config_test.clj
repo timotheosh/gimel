@@ -45,5 +45,5 @@
       (is (= 8080 (config/get-port)))
       (is (= "https://naurrnen.selfdidactic.com" (config/get-web-url)))
       (is (= "resources/public" (config/get-webroot)))
-      (is (= "resources/html" (config/get-source-dir)))
+      (is (= "resources/html" (config/get-snippet-output)))
       (is (= "gimel.db" (config/get-dbname))))))

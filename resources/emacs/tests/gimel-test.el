@@ -119,13 +119,13 @@
     (unwind-protect
         (progn
           (with-temp-file temp-file
-            (insert "[server]\nport = 9090\nweb-url = \"http://localhost:9090\"\nsitemap-source = \"/my/org\"\nsource-dir = \"/my/html\"\n"))
+            (insert "[server]\nport = 9090\nweb-url = \"http://localhost:9090\"\norg-source = \"/my/org\"\nsnippet-output = \"/my/html\"\n"))
           (cl-letf (((symbol-function 'toml:read-from-file)
                      (lambda (_path)
                        '(("server" . (("port" . 9090)
                                       ("web-url" . "http://localhost:9090")
-                                      ("sitemap-source" . "/my/org")
-                                      ("source-dir" . "/my/html")))))))
+                                      ("org-source" . "/my/org")
+                                      ("snippet-output" . "/my/html")))))))
             (let ((gimel-config-file temp-file))
               (let ((result (gimel-load-config)))
                 (should (listp result))

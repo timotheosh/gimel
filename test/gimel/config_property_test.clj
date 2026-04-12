@@ -38,8 +38,8 @@
    :port           gen-port
    :web-url        gen-web-url
    :webroot        gen-non-empty-string
-   :source-dir     gen-non-empty-string
-   :sitemap-source gen-non-empty-string
+   :snippet-output     gen-non-empty-string
+   :org-source gen-non-empty-string
    :template       gen-non-empty-string
    :footer         gen-non-empty-string))
 
@@ -53,14 +53,14 @@
 
 (defn- config->toml-string
   "Serialises a server+database config pair to a TOML string."
-  [{:keys [port web-url webroot source-dir sitemap-source template footer]}
+  [{:keys [port web-url webroot snippet-output org-source template footer]}
    {:keys [dbname]}]
   (str "[server]\n"
        "port = " port "\n"
        "web-url = \"" web-url "\"\n"
        "webroot = \"" webroot "\"\n"
-       "source-dir = \"" source-dir "\"\n"
-       "sitemap-source = \"" sitemap-source "\"\n"
+       "snippet-output = \"" snippet-output "\"\n"
+       "org-source = \"" org-source "\"\n"
        "template = \"" template "\"\n"
        "footer = \"" footer "\"\n"
        "\n"
@@ -143,10 +143,10 @@
      (reset! config/config-data {})
      (config/load-config (.getAbsolutePath temp-file))
      (and (= (:port server)           (config/get-port))
-          (= (:source-dir server)     (config/get-source-dir))
+          (= (:snippet-output server)     (config/get-snippet-output))
           (= (:webroot server)        (config/get-webroot))
           (= (:web-url server)        (config/get-web-url))
           (= (:template server)       (config/get-template-dir))
           (= (:footer server)         (config/get-footer))
           (= (:dbname database)       (config/get-dbname))
-          (= (:sitemap-source server) (config/get-sitemap-source))))))
+          (= (:org-source server) (config/get-org-source))))))

@@ -70,8 +70,8 @@ Does not modify any variable if an error occurs."
     (let* ((server-table (cdr (assoc "server" parsed)))
            (port         (cdr (assoc "port" server-table))))
       (setq gimel-api-endpoint  (format "http://localhost:%d" port))
-      (setq gimel--source-path  (cdr (assoc "sitemap-source" server-table)))
-      (setq gimel--target-path  (cdr (assoc "source-dir" server-table)))
+      (setq gimel--source-path  (cdr (assoc "org-source" server-table)))
+      (setq gimel--target-path  (cdr (assoc "snippet-output" server-table)))
       parsed)))
 
 (defun gimel-export ()
@@ -134,29 +134,29 @@ Does not modify any variable if an error occurs."
   "Returns the absolute target path from config."
   gimel--target-path)
 
-(defun gimel-target-path ()
+(defun gimel-compute-snippet-path ()
   "Determines the target path for the exported document."
-  (let ((source-dir (gimel-get-source-path))
+  (let ((snippet-output (gimel-get-source-path))
         (target-dir (gimel-get-target-path)))
     (concat (file-name-sans-extension
              (gimel-path-append target-dir
-                                (replace-regexp-in-string (regexp-quote source-dir) "" (buffer-file-name))))
+                                (replace-regexp-in-string (regexp-quote snippet-output) "" (buffer-file-name))))
             ".html")))
 
 (defun gimel-copy-asset-files ()
   "Copy all asset files from the source directory to the target directory."
   (interactive)
-  (let ((source-dir (gimel-get-source-path))
+  (let ((snippet-output (gimel-get-source-path))
         (target-dir (gimel-get-target-path))
         (asset-extensions '("\\.jpg$" "\\.png$" "\\.gif$"
                             "\\.webp$" "\\.js$" "\\.css$"))  ; Add more extensions as needed
         files)
     ;; Find all asset files
     (dolist (ext asset-extensions)
-      (setq files (append files (directory-files-recursively source-dir ext))))
+      (setq files (append files (directory-files-recursively snippet-output ext))))
     ;; Copy each asset file to the target directory
     (dolist (file files)
-      (let ((target-file (gimel-path-append target-dir (file-relative-name file source-dir))))
+      (let ((target-file (gimel-path-append target-dir (file-relative-name file snippet-output))))
         (make-directory (file-name-directory target-file) t)
         (copy-file file target-file t)))))
 
@@ -205,7 +205,7 @@ Does not modify any variable if an error occurs."
   "Converts an org-mode file to an HTML snippet and adds YAML metadata (from the file-level settings)  at the top."
   (interactive)
   (let* ((source-buffer buffer-file-name)
-         (target-file (gimel-target-path))
+         (target-file (gimel-compute-snippet-path))
          (split-content (gimel-split-org-content))
          (metadata (gimel-org-metadata-to-yaml (car split-content)))
          (org-content (cadr split-content))
@@ -233,9 +233,9 @@ Does not modify any variable if an error occurs."
   (interactive)
   (delete-directory (gimel-get-target-path) t)
   (gimel-copy-asset-files)
-  (let ((source-dir (gimel-get-source-path))
+  (let ((snippet-output (gimel-get-source-path))
         files)
-    (setq files (directory-files-recursively source-dir "\\.org$"))
+    (setq files (directory-files-recursively snippet-output "\\.org$"))
     (dolist (file files)
       (with-current-buffer (find-file-noselect file)
         ;; Process the file

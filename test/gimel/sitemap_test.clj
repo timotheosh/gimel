@@ -12,7 +12,7 @@
 (defn sitemap-fixture [f]
   (let [tmp (java.io.File/createTempFile "sitemap-test" ".md")]
     (binding [*temp-file* tmp]
-      (with-redefs [config/get-sitemap-source (fn [] (.getParent tmp))
+      (with-redefs [config/get-org-source (fn [] (.getParent tmp))
                     config/get-web-url         (fn [] "https://example.com")]
         (f)))
     (.delete tmp)))
@@ -27,7 +27,7 @@
   (testing "path->url converts .md extension to .html"
     (let [f (java.io.File/createTempFile "page" ".md")]
       (try
-        (with-redefs [config/get-sitemap-source (fn [] (.getParent f))
+        (with-redefs [config/get-org-source (fn [] (.getParent f))
                       config/get-web-url         (fn [] "https://example.com")]
           (let [url (path->url f)]
             (is (clojure.string/ends-with? url ".html"))))
@@ -37,7 +37,7 @@
   (testing "path->url converts .org extension to .html"
     (let [f (java.io.File/createTempFile "page" ".org")]
       (try
-        (with-redefs [config/get-sitemap-source (fn [] (.getParent f))
+        (with-redefs [config/get-org-source (fn [] (.getParent f))
                       config/get-web-url         (fn [] "https://example.com")]
           (let [url (path->url f)]
             (is (clojure.string/ends-with? url ".html"))))
