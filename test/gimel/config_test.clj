@@ -20,16 +20,15 @@
   (testing "a path without ~ is returned unchanged"
     (is (= "/etc/gimel.toml" (config/expand-home "/etc/gimel.toml")))))
 
-(deftest load-config-nonexistent-path-loads-default
-  (testing "a non-existent path causes the bundled default config to be loaded"
-    (config/load-config "/this/path/does/not/exist/gimel.toml")
-    (let [cfg (config/get-config)]
-      (is (map? cfg))
-      (is (contains? cfg :configuration)))))
+(deftest load-config-nonexistent-path-throws-exception
+  (testing "a non-existent path causes an exception to be thrown"
+    (is (thrown-with-msg? clojure.lang.ExceptionInfo
+                          #"Config file does not exist"
+                          (config/load-config "/this/path/does/not/exist/gimel.toml")))))
 
 (deftest get-config-returns-non-empty-map
-  (testing "get-config returns a non-empty map after load-config"
-    (config/load-config "/this/path/does/not/exist/gimel.toml")
+  (testing "get-config returns a non-empty map after load-config with valid config"
+    (config/load-config "resources/config/gimel.toml")
     (let [cfg (config/get-config)]
       (is (map? cfg))
       (is (pos? (count cfg))))))
@@ -40,10 +39,9 @@
 
 (deftest load-config-toml-fixture
   (testing "loading resources/config/gimel.toml returns expected accessor values"
-    (let [toml-path (str (io/resource "config/gimel.toml"))]
-      (config/load-config toml-path)
-      (is (= 8080 (config/get-port)))
-      (is (= "https://naurrnen.selfdidactic.com" (config/get-web-url)))
-      (is (= "resources/public" (config/get-webroot)))
-      (is (= "resources/html" (config/get-snippet-output)))
-      (is (= "gimel.db" (config/get-dbname))))))
+    (config/load-config "resources/config/gimel.toml")
+    (is (= 8080 (config/get-port)))
+    (is (= "https://naurrnen.selfdidactic.com" (config/get-web-url)))
+    (is (= "resources/public" (config/get-webroot)))
+    (is (= "resources/html" (config/get-snippet-output)))
+    (is (= "gimel.db" (config/get-dbname)))))

@@ -57,7 +57,9 @@
   [config]
   (let [config-path (expand-home config)]
     (if-not (.exists (io/as-file config-path))
-      (reset! config-data (check-config (parse-toml (str (io/resource "config/gimel.toml")))))
+      (throw (ex-info (str "Config file does not exist: " config-path)
+                      {:file-path config-path
+                       :original-path config}))
       (reset! config-data (check-config (parse-toml config-path))))))
 
 (defn get-config
