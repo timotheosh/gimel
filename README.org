@@ -6,15 +6,19 @@
 A Clojure static site generator for publishing Org-mode content, with an Emacs integration and SQLite-backed metadata.
 
 ** Description
-Gimel, like most static site generators, is an “opinionated” implementation designed around a particular workflow. It originally watched a directory for file changes and converted changed files to HTML for a static site.
+~gimel~, like most static site generators, is an “opinionated” implementation designed around a particular workflow. It originally watched a directory for file changes and converted changed files to HTML for a static site.
 I tried maintaining my websites in Markdown but found myself duplicating content I already maintained as Org-mode projects. As the sites grew, Org-mode publishing became slow, and I needed something faster.
 Dissatisfied with the available Org-mode parsers outside Emacs Lisp, I took a different approach. I created an Emacs package that uses Emacs itself to export Org-mode files into HTML snippets. ~gimel.el~ correctly converts links, adds IDs to section headers, preserves file-level properties as metadata, and stores that metadata in SQLite.
-~gimel.el~ can run in batch mode, but because batch startup is nearly as slow as ~org-publish~, the normal workflow exports individual files on save. The Gimel server then renders the resulting content as a site.
+~gimel.el~ can run in batch mode, but because batch startup is nearly as slow as ~org-publish~, the normal workflow exports individual files on save. The ~gimel~ server then renders the resulting content as a site.
+
+*** Sites built with ~gimel~
+- [[https://naurrnen.selfdidactic.com][Naurrnen]] - Fantasy worldbuilding project.
+- [[https://chronos.selfdidactic.com][Age of Chronos]] - Hard science-fiction worldbuilding project.
 
 ** Quickstart
 Get from zero to a publishing site in five minutes.
 
-Gimel has two moving parts: the Gimel server, a Clojure application that renders your site, and *gimel.el*, an Emacs package that converts your Org-mode files and triggers a render on every save.
+~gimel~ has two moving parts: the ~gimel~ server, a Clojure application that renders your site, and *gimel.el*, an Emacs package that converts your Org-mode files and triggers a render on every save.
 
 *** Prerequisites
 
@@ -69,7 +73,7 @@ mkdir -p my-site/{org,html,public}
 cd my-site
 #+END_SRC
 
-*** Step 4 — Configure the Gimel server
+*** Step 4 — Configure the ~gimel~ server
 
 Create =~/.config/gimel/my-site.toml= (or place =gimel.toml= in your project root):
 
@@ -96,9 +100,9 @@ Create =.dir-locals.el= in your project root:
          (gimel-auto-publish . t))))
 #+END_SRC
 
-gimel.el reads the TOML file automatically when you open a file in the project. The port and directory paths are set from the config — you don't need to duplicate them here.
+~gimel.el~ reads the TOML file automatically when you open a file in the project. The port and directory paths are set from the config — you don't need to duplicate them here.
 
-*** Step 6 — Start the Gimel server
+*** Step 6 — Start the ~gimel~ server
 
 From the gimel repository root:
 
@@ -114,7 +118,7 @@ Create =my-site/org/index.org=:
 #+TITLE: My First Page
 #+AUTHOR: Your Name
 
-* Hello, Gimel
+* Hello, gimel
 
 This is my first page.
 
@@ -123,10 +127,10 @@ This is my first page.
 Some content here.
 #+END_EXAMPLE
 
-Open the file in Emacs. When you save it, gimel.el will:
+Open the file in Emacs. When you save it, ~gimel.el~ will:
 
 1. Convert the Org-mode file to an HTML snippet in =html/=
-2. Ping the Gimel server via =GET /api/export=
+2. Ping the ~gimel~ server via =GET /api/export=
 3. The server renders the full site into =public/=
 
 You should see =gimel site exported= in the minibuffer. Your rendered page is now in =public/index.html=.
