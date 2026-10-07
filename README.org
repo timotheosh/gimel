@@ -3,10 +3,10 @@
   :CUSTOM_ID: gimel
   :END:
 
-Static site generator in Clojure, with /some/ potential to become a CMS. It will also collect metadata from those files and store them in a sqlite database.
+Static site generator in Clojure, with /some/ potential to become a CMS. It will also collect metadata from those files and store it in a SQLite database.
 
 ** Description
-~gimel~, like most staic website generators, is an "opinionated" implementation. It fits a particular workflow. It originally watched a directory for file changes and then convert any changed files into html for a static site. I tried maintaining my websites in markdown, but becamw eutterly dissatisfied, as I had been maintaing my websites as org-mode projects. Org-mode publish became slow as the site grew, and I needed something faster. Dissatisfied with the the current state of org-mode parsers in any language, except elisp, I opted for a different path forward. So I created an Emacs package that minimally convert org-mode files into html snippets. ~gimel.el~ will properly convert links, add id's to section headers. It can be run in batch mode, but batch mode is almost as slow as org-publish. So individual files can be exported on save. File-level properties for org-mode files are saved as metadata and stored in the sqlite database.
+~gimel~, like most static website generators, is an "opinionated" implementation. It fits a particular workflow. It originally watched a directory for file changes and then converted any changed files into HTML for a static site. I tried maintaining my websites in Markdown, but became utterly dissatisfied, as I had been maintaining my websites as org-mode projects. Org-mode publishing became slow as the site grew, and I needed something faster. Dissatisfied with the current state of org-mode parsers in any language, except Elisp, I opted for a different path forward. So I created an Emacs package that minimally converts org-mode files into HTML snippets. ~gimel.el~ will properly convert links and add id's to section headers. It can be run in batch mode, but batch mode is almost as slow as org-publish. So individual files can be exported on save. File-level properties for org-mode files are saved as metadata and stored in the SQLite database.
 
 ** Quickstart
 Get from zero to a publishing site in five minutes.
@@ -134,10 +134,10 @@ You should see =gimel site exported= in the minibuffer. Your rendered page is no
 - Customise the template — see the [[file:guide.org::*Template System][Template System]] section of the full guide
 - Trigger a full rebuild with =M-x gimel-batch-process-org-files= after making changes that affect all pages
 
-For complete reference documentation see [[file:docs/guide.org][guide.org]].
+For complete reference documentation, see [[file:docs/guide.org][guide.org]].
 
 ** Future
-At some point, I may use the data generated in the database as a means for generating menus and "related links" section for the sites.
+At some point, I may use the data generated in the database as a means of generating menus and a "related links" section for the sites.
 
 ** License
    :PROPERTIES:
