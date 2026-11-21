@@ -26,7 +26,9 @@
                  [ch.qos.logback/logback-classic "1.5.32"]
                  [org.clojure/test.check "1.1.3"]
                  [ring/ring-mock "0.6.2"]]
-  :plugins [[lein-shell "0.5.0"]]
+  :plugins [[lein-shell "0.5.0"]
+            [lein-cloverage "1.2.4"]
+            [lein-mutate "0.1.0"]]
   :aliases {"emacs-test" ["shell" "emacs" "--batch"
                           "--eval" "(add-to-list 'load-path \"resources/emacs\")"
                           "--eval" "(add-to-list 'load-path \"resources/emacs/vendor\")"
