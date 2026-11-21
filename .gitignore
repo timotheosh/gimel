@@ -34,3 +34,7 @@ pom.xml.asc
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Acceptance pipeline work files (IR, DRY reports)
+/build
+/.metrics

@@ -37,6 +37,8 @@
                           "-l" "resources/emacs/tests/gimel-test.el"
                           "-f" "ert-run-tests-batch-and-exit"]
             "test-all" ["do" "test," "emacs-test"]}
+  :test-paths ["test" "acceptance"]
+  :test-selectors {:acceptance #(.startsWith (str (:ns %)) "acceptance.")}
   :main ^:skip-aot gimel.core
   :jvm-opts ["-Dclojure.tools.logging.factory=clojure.tools.logging.impl/slf4j-factory"]
   :target-path "target/%s"

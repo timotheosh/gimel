@@ -1,0 +1,8 @@
+{:prompts
+ {:acceptance-writer      {:path "prompts/acceptance-writer.md"}
+  :acceptance-review      {:path "prompts/acceptance-review.md"}
+  :acceptance-implementer {:path "prompts/acceptance-implementer.md"}
+  :test-writer            {:path "prompts/test-writer.md"}
+  :implementer            {:path "prompts/implementer.md"}
+  :correctness-review     {:path "prompts/correctness-review.md"}
+  :maintainability-review {:path "prompts/maintainability-review.md"}}}

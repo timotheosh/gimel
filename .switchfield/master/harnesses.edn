@@ -1,0 +1,6 @@
+{:harnesses
+ {:opencode
+  {:command "opencode"
+   :model {:parameter "-m"}
+   ;; --auto approves every permission; :writes are checked after each step.
+   :extra-params ["--auto"]}}}

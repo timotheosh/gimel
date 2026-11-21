@@ -1,0 +1,29 @@
+{:agents
+ {:acceptance-writer
+  {:harness :opencode
+   :model "openrouter/~deepseek/deepseek-pro-latest"
+   :writes ["features/"]
+   :must-change true}
+
+  :acceptance-implementer
+  {:harness :opencode
+   :model "openrouter/~deepseek/deepseek-pro-latest"
+   :writes ["acceptance/"]
+   :must-change true}
+
+  :test-writer
+  {:harness :opencode
+   :model "openrouter/~deepseek/deepseek-pro-latest"
+   :writes ["test/"]}
+
+  :implementer
+  {:harness :opencode
+   :model "openrouter/~deepseek/deepseek-pro-latest"
+   :writes ["src/" "resources/"]
+   :must-change true}
+
+  :reviewer
+  {:harness :opencode
+   :model "openrouter/~deepseek/deepseek-flash-latest"
+   :writes []
+   :expects :findings}}}

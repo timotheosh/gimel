@@ -1,0 +1,112 @@
+{:pipelines
+ {:development
+  {:steps
+   [;; -- Acceptance testing (Acceptance Pipeline Specification) ------------
+    ;; Needs APS_DIR: a checkout of unclebob/Acceptance-Pipeline-Specification.
+    {:agent :acceptance-writer
+     :prompt :acceptance-writer}
+
+    ;; Gherkin -> JSON IR, then the advisory IR-DRY report. A parse error
+    ;; sends the writer back; the reviewer reads the DRY reports.
+    {:command {:args ["sh" "-c"
+                      "set -e
+: \"${APS_DIR:?set APS_DIR to the Acceptance-Pipeline-Specification checkout}\"
+aps() { bb --config \"$APS_DIR/bb.edn\" --deps-root \"$APS_DIR\" run \"$@\"; }
+mkdir -p build/acceptance/ir build/acceptance/dry
+for f in features/*.feature; do
+  n=$(basename \"$f\" .feature)
+  aps gherkin-parser \"$f\" \"build/acceptance/ir/$n.json\"
+  aps gherkin-ir-dry-checker \"build/acceptance/ir/$n.json\" \"build/acceptance/dry/$n.json\"
+done"]
+               :artifact :both}
+     :redirect {:agent :acceptance-writer}}
+
+    {:agent :reviewer
+     :prompt :acceptance-review
+     :verdict :findings
+     :redirect {:agent :acceptance-writer :max 1}}
+
+    {:agent :acceptance-implementer
+     :prompt :acceptance-implementer}
+
+    ;; Generate thin entry points from each IR with the project's generator.
+    {:command {:args ["sh" "-c"
+                      "set -e
+for f in build/acceptance/ir/*.json; do
+  lein run -m acceptance.generator \"$f\" acceptance/generated
+done"]
+               :artifact :both}
+     :timeout-ms 600000
+     :redirect {:agent :acceptance-implementer}}
+
+    ;; -- Implementation, driven by the acceptance tests --------------------
+    {:agent :implementer
+     :prompt :implementer}
+
+    {:command {:args ["lein" "test" ":acceptance"] :artifact :both}
+     :timeout-ms 600000
+     :redirect {:agent :implementer}}
+
+    ;; Quality gate: no structural duplication (similarity >= 0.8) in the
+    ;; changed functions. dryer always exits 0, so fail on any DUPLICATE line.
+    ;; Needs crapper, dryer and mutator on PATH (pip install git+<repo url>).
+    {:command {:args ["sh" "-c"
+                      "set -e
+files=$(git ls-files -m -o --exclude-standard -- src | while read -r f; do if [ -f \"$f\" ]; then echo \"$f\"; fi; done)
+[ -n \"$files\" ] || exit 0
+out=$(mktemp)
+dryer --threshold 0.8 $files > \"$out\" 2>&1
+cat \"$out\"
+! grep -q DUPLICATE \"$out\""]
+               :artifact :both}
+     :redirect {:agent :implementer}}
+
+    ;; -- Unit tests for the finished implementation -------------------------
+    {:agent :test-writer
+     :prompt :test-writer}
+
+    ;; Full run: a failure (with clipped output) sends the test writer back.
+    {:command {:args ["lein" "test"] :artifact :both}
+     :timeout-ms 600000
+     :redirect {:agent :test-writer}}
+
+    ;; Quality gate: CRAP < 10 for every changed function, using coverage
+    ;; from the full test run. Prints the worst offenders; the full table is
+    ;; long, so a failure keeps only the report's head.
+    {:command {:args ["sh" "-c"
+                      "set -e
+files=$(git ls-files -m -o --exclude-standard -- src | while read -r f; do if [ -f \"$f\" ]; then echo \"$f\"; fi; done)
+[ -n \"$files\" ] || exit 0
+out=$(mktemp)
+crapper --coverage-command \"lein cloverage --lcov\" --threshold 10 $files > \"$out\" 2>&1 && exit 0
+if grep -q 'CRAP Report' \"$out\"; then sed -n '/CRAP Report/,$p' \"$out\" | head -n 25; else tail -n 40 \"$out\"; fi
+exit 1"]
+               :artifact :both}
+     :timeout-ms 900000
+     :redirect {:agent :test-writer}}
+
+    ;; Quality gate: every mutation of the changed functions is covered and
+    ;; killed. Exit 3 means survivors; exit 2 a failing baseline.
+    {:command {:args ["sh" "-c"
+                      "set -e
+files=$(git ls-files -m -o --exclude-standard -- src | while read -r f; do if [ -f \"$f\" ]; then echo \"$f\"; fi; done)
+[ -n \"$files\" ] || exit 0
+out=$(mktemp)
+mutator --coverage-command \"lein cloverage --lcov\" --test-command \"lein test\" $files > \"$out\" 2>&1 && exit 0
+rc=$?
+grep -vE '^(Instrumented|Testing|Loading|Test namespaces|KILLED|\\{:result)' \"$out\" | tail -n 60
+exit $rc"]
+               :artifact :both}
+     :timeout-ms 3600000
+     :redirect {:agent :test-writer}}
+
+    ;; -- Review; findings send the run back to the implementer ---------------
+    {:agent :reviewer
+     :prompt :correctness-review
+     :verdict :findings
+     :redirect {:agent :implementer}}
+
+    {:agent :reviewer
+     :prompt :maintainability-review
+     :verdict :findings
+     :redirect {:agent :implementer :max 1}}]}}}
